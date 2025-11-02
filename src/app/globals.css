@@ -21,13 +21,9 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  * {
     animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }
 
@@ -66,14 +62,12 @@ body {
 }
 
 .interactive-element {
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: all 0.3s ease;
 }
 
-/* Anti-flickering */
 .btn, button, .card, .project-card, .hero-section {
   backface-visibility: hidden;
   transform: translateZ(0);
-  will-change: transform;
 }
 
 .hero-section .absolute {
@@ -81,7 +75,6 @@ body {
   transform: translateZ(0);
 }
 
-/* Ensure proper spacing for scroll indicator */
 .hero-section {
   padding-bottom: 6rem;
 }
@@ -92,7 +85,6 @@ body {
   }
 }
 
-/* Line clamping utilities */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -129,7 +121,7 @@ select:focus {
 
 @media (max-width: 640px) {
   input, textarea, button {
-    font-size: 16px; /* Prevents iOS zoom */
+    font-size: 16px;
   }
   
   .container {
@@ -139,55 +131,33 @@ select:focus {
   .card {
     border-radius: 1rem;
   }
-  
-  .mobile-nav {
-    padding: 0.75rem;
-  }
 }
 
-/* Tablet optimizations */
 @media (min-width: 641px) and (max-width: 1024px) {
   .container {
     padding: 0 2rem;
   }
 }
 
-/* Large screen optimizations */
 @media (min-width: 1025px) {
   .container {
     padding: 0 3rem;
   }
 }
 
-/* Section spacing improvements */
 .section-spacing {
-  padding-top: clamp(3rem, 8vh, 6rem);
-  padding-bottom: clamp(3rem, 8vh, 6rem);
+  padding: clamp(3rem, 8vh, 6rem) 0;
 }
 
 .section-spacing-sm {
-  padding-top: clamp(2rem, 6vh, 4rem);
-  padding-bottom: clamp(2rem, 6vh, 4rem);
+  padding: clamp(2rem, 6vh, 4rem) 0;
 }
 
-/* Fix section end spacing */
-.section-end {
-  margin-bottom: clamp(2rem, 5vh, 4rem);
-}
-
-/* Blog page specific fixes */
-.blog-back-section {
-  padding-top: clamp(2rem, 4vh, 3rem);
-  padding-bottom: clamp(4rem, 8vh, 6rem);
-}
-
-/* Admin page spacing */
 .admin-content {
   min-height: calc(100vh - 80px);
   padding-bottom: 2rem;
 }
 
-/* Subtle grid background patterns */
 .grid-pattern {
   background-image: 
     linear-gradient(rgba(139, 99, 92, 0.03) 1px, transparent 1px),
@@ -196,9 +166,6 @@ select:focus {
 }
 
 .grid-pattern-lg {
-  background-image: 
-    linear-gradient(rgba(139, 99, 92, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(139, 99, 92, 0.02) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
