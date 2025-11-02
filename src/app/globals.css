@@ -1,0 +1,442 @@
+@import "tailwindcss";
+
+:root {
+  /* Color Palette - Warm Neutrals */
+  --color-flax: #ddd78d;
+  --color-ecru: #dcbf85;
+  --color-rose-taupe: #8b635c;
+  --color-walnut: #60594d;
+  --color-ash-gray: #93a29b;
+  
+  /* Semantic Colors */
+  --color-primary: var(--color-flax);
+  --color-secondary: var(--color-ecru);
+  --color-accent: var(--color-rose-taupe);
+  --color-neutral: var(--color-walnut);
+  --color-background: #fafaf9;
+  --color-foreground: var(--color-walnut);
+  --color-surface: rgba(147, 162, 155, 0.1);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-accent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Selection styles */
+::selection {
+  background: var(--color-primary);
+  color: var(--color-neutral);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Interactive element base styles */
+.interactive-element {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Anti-flickering styles */
+.btn, button, .card, .project-card, .hero-section {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Stable background for hero section */
+.hero-section .absolute {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Ensure proper spacing for scroll indicator */
+.hero-section {
+  padding-bottom: 6rem;
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    padding-bottom: 4rem;
+  }
+}
+
+/* Line clamping utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Admin login page styles */
+.admin-login-bg {
+  background: linear-gradient(135deg, var(--color-background) 0%, rgba(147, 162, 155, 0.05) 50%, var(--color-background) 100%);
+}
+
+/* Form input improvements */
+input[type="text"], 
+input[type="password"], 
+input[type="email"], 
+textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Better focus states for forms */
+input:focus, 
+textarea:focus, 
+select:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 99, 92, 0.1);
+}
+
+/* Responsive form elements */
+@media (max-width: 640px) {
+  input, textarea, button {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Better mobile spacing */
+  .container {
+    padding: 0 1rem;
+  }
+  
+  /* Mobile-optimized cards */
+  .card {
+    border-radius: 1rem;
+  }
+  
+  /* Mobile navigation improvements */
+  .mobile-nav {
+    padding: 0.75rem;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1025px) {
+  .container {
+    padding: 0 3rem;
+  }
+}
+
+/* Section spacing improvements */
+.section-spacing {
+  padding-top: clamp(3rem, 8vh, 6rem);
+  padding-bottom: clamp(3rem, 8vh, 6rem);
+}
+
+.section-spacing-sm {
+  padding-top: clamp(2rem, 6vh, 4rem);
+  padding-bottom: clamp(2rem, 6vh, 4rem);
+}
+
+/* Fix section end spacing */
+.section-end {
+  margin-bottom: clamp(2rem, 5vh, 4rem);
+}
+
+/* Blog page specific fixes */
+.blog-back-section {
+  padding-top: clamp(2rem, 4vh, 3rem);
+  padding-bottom: clamp(4rem, 8vh, 6rem);
+}
+
+/* Admin page spacing */
+.admin-content {
+  min-height: calc(100vh - 80px);
+  padding-bottom: 2rem;
+}
+
+/* Subtle grid background patterns */
+.grid-pattern {
+  background-image: 
+    linear-gradient(rgba(139, 99, 92, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 99, 92, 0.03) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.grid-pattern-lg {
+  background-image: 
+    linear-gradient(rgba(139, 99, 92, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 99, 92, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.grid-pattern-dots {
+  background-image: radial-gradient(circle, rgba(139, 99, 92, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Grid overlay for hero sections */
+.hero-grid {
+  position: relative;
+}
+
+.hero-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(139, 99, 92, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 99, 92, 0.02) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Animated grid for special sections */
+.animated-grid {
+  background-image: 
+    linear-gradient(rgba(139, 99, 92, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 99, 92, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 30px 30px; }
+}
+
+/* Grid pattern refinements */
+.grid-pattern-subtle {
+  background-image: 
+    linear-gradient(rgba(139, 99, 92, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 99, 92, 0.015) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Ensure grid doesn't interfere with content */
+.grid-pattern,
+.grid-pattern-lg,
+.grid-pattern-dots,
+.grid-pattern-subtle {
+  background-attachment: fixed;
+}
+
+/* Disable grid animations on mobile for performance */
+@media (max-width: 768px) {
+  .animated-grid {
+    animation: none;
+    background-image: 
+      linear-gradient(rgba(139, 99, 92, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(139, 99, 92, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  
+  .grid-pattern,
+  .grid-pattern-lg {
+    background-size: 30px 30px;
+    opacity: 0.5;
+  }
+  
+  .grid-pattern-dots {
+    background-size: 20px 20px;
+    opacity: 0.3;
+  }
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animated-grid {
+    animation: none;
+  }
+}
+
+/* Smooth button transitions */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: inherit;
+  z-index: -1;
+  transition: all 0.3s ease;
+}
+
+/* Container styles */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 clamp(1rem, 5vw, 3rem);
+}
+
+.section {
+  min-height: 100vh;
+  padding: clamp(4rem, 10vh, 8rem) 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Typography utilities */
+.typography-hero {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.typography-heading {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.typography-subheading {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.typography-body {
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Grid utilities */
+.grid-asymmetric {
+  display: grid;
+  grid-template-columns: 1.618fr 1fr; /* Golden ratio */
+  gap: clamp(2rem, 5vw, 4rem);
+}
+
+/* Parallax effects */
+.parallax-slow {
+  will-change: transform;
+}
+
+.parallax-medium {
+  will-change: transform;
+}
+
+.parallax-fast {
+  will-change: transform;
+}
+
+.parallax-float {
+  will-change: transform;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .grid-asymmetric {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Reduce motion on mobile for better performance */
+  .section {
+    padding: clamp(2rem, 8vh, 4rem) 0;
+  }
+  
+  /* Better touch targets */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Optimize font sizes for mobile */
+  .typography-hero {
+    font-size: clamp(2.5rem, 12vw, 4rem);
+  }
+  
+  .typography-heading {
+    font-size: clamp(1.75rem, 8vw, 2.5rem);
+  }
+  
+  /* Disable parallax on mobile for better performance */
+  .parallax-slow,
+  .parallax-medium,
+  .parallax-fast,
+  .parallax-float {
+    transform: none !important;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .interactive-element:hover {
+    transform: none;
+  }
+  
+  /* Larger touch targets */
+  button, a, input, textarea {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Optimize for retina displays */
+  .typography-hero, .typography-heading {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
