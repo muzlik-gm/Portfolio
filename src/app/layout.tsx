@@ -3,11 +3,12 @@ import { Inter } from "next/font/google";
 import { WebVitals } from "@/components/performance";
 import "./globals.css";
 
+// Using Inter because it's clean, modern, and easy to read
 const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-inter",
-  display: "swap", // Optimize font loading
+  display: "swap", // This makes fonts load faster - nobody likes waiting!
 });
 
 export const metadata: Metadata = {
