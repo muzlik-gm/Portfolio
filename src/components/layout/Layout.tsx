@@ -6,6 +6,7 @@ import { Footer } from "./Footer";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import { useScrollAnimations } from "@/hooks/useScrollAnimations";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { SkipLink } from "@/components/accessibility";
 
 // Lazy load effects for better performance
@@ -25,6 +26,8 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+  const disableBackground = isMobile || prefersReducedMotion;
   
   // Initialize smooth scrolling and animations
   const lenisRef = useSmoothScroll();
@@ -45,14 +48,10 @@ export function Layout({ children }: LayoutProps) {
       {/* Performance optimized effects */}
       <Suspense fallback={null}>
         {!prefersReducedMotion && (
-          <>
-            <LoadingAnimation />
-            <AnimatedBackground />
-            {/* Temporarily disable heavy effects for better performance */}
-            {/* <CursorTrail />
-            <MorphingShapes />
-            <CinematicOverlay /> */}
-          </>
+          <LoadingAnimation />
+        )}
+        {!disableBackground && (
+          <AnimatedBackground />
         )}
       </Suspense>
       
