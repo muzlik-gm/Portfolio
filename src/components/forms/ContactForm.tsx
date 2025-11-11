@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button, Typography } from "@/components/ui";
 import { scrollReveal } from "@/lib/animations";
+import { CONTACT_CONFIG } from "@/lib/constants";
 
 interface FormData {
   name: string;
@@ -60,22 +61,43 @@ export function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     setSubmitStatus('idle');
 
     try {
-      // Simulate form submission
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // In a real app, you would send the data to your backend
-      console.log("Form submitted:", formData);
-      
-      setSubmitStatus('success');
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus('success');
+        setFormData({ name: "", email: "", subject: "", message: "" });
+        setErrors({});
+      } else if (response.status === 429) {
+        setErrors({ message: data.message });
+        setSubmitStatus('idle');
+      } else if (data.errors) {
+        // Handle validation errors
+        const fieldErrors: FormErrors = {};
+        data.errors.forEach((error: any) => {
+          fieldErrors[error.field as keyof FormErrors] = error.message;
+        });
+        setErrors(fieldErrors);
+        setSubmitStatus('idle');
+      } else {
+        setSubmitStatus('error');
+      }
     } catch (error) {
+      console.error('Form submission error:', error);
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
