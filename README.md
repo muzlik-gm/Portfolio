@@ -4,7 +4,7 @@ Hey there! Welcome to my portfolio's codebase. This is where I showcase my journ
 
 ## 🎨 What's This About?
 
-This is my personal portfolio website built with modern web technologies. It's designed to be sleek, fast, and actually enjoyable to browse through. No boring templates here – everything is crafted with care and attention to detail.
+This is my personal portfolio website built with modern web technologies. It's designed to be sleek, fast, and actually enjoyable to browse through. No boring templates here – everything is crafted with care and attention to detail!
 
 ## 🚀 Built With
 
