@@ -8,18 +8,20 @@ import { useRouter } from "next/navigation";
 import { Lock } from "lucide-react";
 
 export default function AdminLoginPage() {
-  const [credentials, setCredentials] = useState({
-    username: "",
-    password: ""
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const router = useRouter();
+   const [credentials, setCredentials] = useState({
+     email: "",
+     password: ""
+   });
+   const [isLoading, setIsLoading] = useState(false);
+   const [error, setError] = useState("");
+   const router = useRouter();
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+    console.log('[LOGIN PAGE] Submitting login with email:', credentials.email);
 
     try {
       const response = await fetch("/api/admin/login", {
@@ -31,15 +33,25 @@ export default function AdminLoginPage() {
       });
 
       const data = await response.json();
+      console.log('[LOGIN PAGE] Login response:', response.status, data);
 
       if (response.ok) {
+        console.log('[LOGIN PAGE] Login successful, storing token');
+        console.log('[LOGIN PAGE] Response data structure:', JSON.stringify(data, null, 2));
         // Store the token in localStorage
-        localStorage.setItem("adminToken", data.token);
-        router.push("/admin/dashboard");
+        localStorage.setItem("adminToken", data.data.token);
+        console.log('[LOGIN PAGE] Token stored in localStorage:', localStorage.getItem("adminToken") ? 'YES' : 'NO');
+        console.log('[LOGIN PAGE] Redirecting to dashboard');
+        // Add a small delay to ensure token is persisted
+        setTimeout(() => {
+          router.push("/admin/dashboard");
+        }, 100);
       } else {
+        console.log('[LOGIN PAGE] Login failed with message:', data.message);
         setError(data.message || "Invalid credentials");
       }
     } catch (error) {
+      console.error('[LOGIN PAGE] Login error:', error);
       setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -86,14 +98,14 @@ export default function AdminLoginPage() {
             {/* Username Field */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-foreground/80">
-                Username
+                Email
               </label>
               <motion.input
-                type="text"
-                value={credentials.username}
-                onChange={(e) => handleChange('username', e.target.value)}
+                type="email"
+                value={credentials.email}
+                onChange={(e) => handleChange('email', e.target.value)}
                 className="w-full px-4 py-3 sm:py-4 bg-surface/30 border border-accent/20 rounded-xl text-foreground placeholder-foreground/50 focus:outline-none focus:border-accent focus:bg-surface/50 focus:ring-2 focus:ring-accent/20 transition-all duration-300 text-sm sm:text-base"
-                placeholder="Enter admin username"
+                placeholder="Enter admin email"
                 required
                 whileFocus={{ 
                   scale: 1.01

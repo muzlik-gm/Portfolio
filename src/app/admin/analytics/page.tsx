@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Typography, Button, Card } from "@/components/ui";
 import { scrollReveal, staggerContainer } from "@/lib/animations";
+import { base64UrlDecode } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
 export default function AdminAnalyticsPage() {
@@ -27,7 +28,7 @@ export default function AdminAnalyticsPage() {
 
     // Verify token
     try {
-      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const tokenData = JSON.parse(base64UrlDecode(token.split('.')[1]));
       if (tokenData.exp * 1000 < Date.now()) {
         localStorage.removeItem("adminToken");
         router.push("/admin/login");
@@ -73,12 +74,51 @@ export default function AdminAnalyticsPage() {
     return null;
   }
 
-  const mockAnalytics = [
-    { label: "Page Views", value: "2,847", change: "+12%", color: "text-green-600" },
-    { label: "Unique Visitors", value: "1,234", change: "+8%", color: "text-green-600" },
-    { label: "Blog Views", value: "892", change: "+15%", color: "text-green-600" },
-    { label: "Project Views", value: "1,456", change: "+5%", color: "text-green-600" },
-  ];
+  const [analyticsData, setAnalyticsData] = useState({
+    metrics: [
+      { label: "Page Views", value: "0", change: "0%", color: "text-gray-600" },
+      { label: "Unique Visitors", value: "0", change: "0%", color: "text-gray-600" },
+      { label: "Blog Views", value: "0", change: "0%", color: "text-gray-600" },
+      { label: "Project Views", value: "0", change: "0%", color: "text-gray-600" },
+    ],
+    isLoading: true,
+    error: null as string | null
+  });
+
+  const fetchAnalytics = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch('/api/admin/analytics', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics data');
+      }
+
+      const data = await response.json();
+      setAnalyticsData({
+        metrics: data.metrics,
+        isLoading: false,
+        error: null
+      });
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      setAnalyticsData({
+        metrics: analyticsData.metrics,
+        isLoading: false,
+        error: 'Failed to load analytics data'
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchAnalytics();
+    }
+  }, [isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-[#fafaf9]" style={{ background: '#fafaf9' }}>
@@ -132,32 +172,67 @@ export default function AdminAnalyticsPage() {
               <Typography variant="subheading" className="text-foreground mb-6">
                 Overview (Last 30 Days)
               </Typography>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {mockAnalytics.map((metric, index) => (
-                  <motion.div
-                    key={metric.label}
-                    variants={scrollReveal}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="p-6 bg-background/50 border-accent/20">
-                      <div className="space-y-2">
-                        <Typography variant="body" className="text-foreground/70 text-sm">
-                          {metric.label}
-                        </Typography>
-                        <div className="flex items-end gap-2">
-                          <Typography variant="heading" className="text-2xl font-bold text-foreground">
-                            {metric.value}
-                          </Typography>
-                          <span className={`text-sm font-medium ${metric.color}`}>
-                            {metric.change}
-                          </span>
+
+              {analyticsData.isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[...Array(4)].map((_, index) => (
+                    <motion.div
+                      key={index}
+                      variants={scrollReveal}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className="p-6 bg-background/50 border-accent/20">
+                        <div className="space-y-2">
+                          <div className="h-4 bg-accent/20 rounded animate-pulse" />
+                          <div className="flex items-end gap-2">
+                            <div className="h-8 bg-accent/20 rounded animate-pulse w-20" />
+                            <div className="h-4 bg-accent/20 rounded animate-pulse w-12" />
+                          </div>
                         </div>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : analyticsData.error ? (
+                <Card className="p-6 bg-background/50 border-accent/20 text-center">
+                  <Typography variant="body" className="text-red-600 mb-4">
+                    {analyticsData.error}
+                  </Typography>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={fetchAnalytics}
+                  >
+                    Try Again
+                  </Button>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {analyticsData.metrics.map((metric, index) => (
+                    <motion.div
+                      key={metric.label}
+                      variants={scrollReveal}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className="p-6 bg-background/50 border-accent/20">
+                        <div className="space-y-2">
+                          <Typography variant="body" className="text-foreground/70 text-sm">
+                            {metric.label}
+                          </Typography>
+                          <div className="flex items-end gap-2">
+                            <Typography variant="heading" className="text-2xl font-bold text-foreground">
+                              {metric.value}
+                            </Typography>
+                            <span className={`text-sm font-medium ${metric.color}`}>
+                              {metric.change}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             {/* Coming Soon */}

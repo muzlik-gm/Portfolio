@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Typography, Button, Card, Icon } from "@/components/ui";
 import { scrollReveal, staggerContainer } from "@/lib/animations";
+import { base64UrlDecode } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { blogPosts } from "@/data/blog";
-import { projects } from "@/data/projects";
 
 interface AdminStats {
   totalPosts: number;
@@ -17,68 +16,128 @@ interface AdminStats {
   devProjects: number;
 }
 
+interface RecentActivity {
+  icon: string;
+  message: string;
+  timeAgo: string;
+  type: string;
+}
+
+interface DashboardData {
+  totalUsers: number;
+  contentStats: AdminStats;
+  recentActivities: RecentActivity[];
+  systemStatus: Record<string, any>;
+}
+
 export default function AdminDashboardPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState<AdminStats>({
-    totalPosts: 0,
-    publishedPosts: 0,
-    draftPosts: 0,
-    totalProjects: 0,
-    liveProjects: 0,
-    devProjects: 0
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    totalUsers: 0,
+    contentStats: {
+      totalPosts: 0,
+      publishedPosts: 0,
+      draftPosts: 0,
+      totalProjects: 0,
+      liveProjects: 0,
+      devProjects: 0
+    },
+    recentActivities: [],
+    systemStatus: {}
   });
   const router = useRouter();
 
   useEffect(() => {
-    // Force solid background on body
-    document.body.style.background = '#fafaf9';
-    document.body.style.backgroundImage = 'none';
-    document.documentElement.style.background = '#fafaf9';
-    document.documentElement.style.backgroundImage = 'none';
-    
-    // Check authentication
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
+    const fetchDashboardData = async () => {
+      // Force solid background on body
+      document.body.style.background = '#fafaf9';
+      document.body.style.backgroundImage = 'none';
+      document.documentElement.style.background = '#fafaf9';
+      document.documentElement.style.backgroundImage = 'none';
 
-    // Verify token (in a real app, you'd verify with the server)
-    try {
-      // Simple token validation (in production, verify with server)
-      const tokenData = JSON.parse(atob(token.split('.')[1]));
-      if (tokenData.exp * 1000 < Date.now()) {
-        localStorage.removeItem("adminToken");
+      console.log('[DASHBOARD] Checking authentication');
+      // Check authentication
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        console.log('[DASHBOARD] No token found in localStorage, redirecting to login');
         router.push("/admin/login");
         return;
       }
-      
-      setIsAuthenticated(true);
-      
-      // Calculate stats
-      const totalPosts = blogPosts.length;
-      const publishedPosts = blogPosts.filter(p => p.status === 'published').length;
-      const draftPosts = blogPosts.filter(p => p.status === 'draft').length;
-      const totalProjects = projects.length;
-      const liveProjects = projects.filter(p => p.status === 'live').length;
-      const devProjects = projects.filter(p => p.status === 'development').length;
+      console.log('[DASHBOARD] Token found in localStorage');
 
-      setStats({
-        totalPosts,
-        publishedPosts,
-        draftPosts,
-        totalProjects,
-        liveProjects,
-        devProjects
-      });
-    } catch (error) {
-      localStorage.removeItem("adminToken");
-      router.push("/admin/login");
-    } finally {
-      setIsLoading(false);
-    }
-    
+      // Verify token with server
+      try {
+        console.log('[DASHBOARD] Verifying token with server');
+        const verifyResponse = await fetch('/api/admin/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!verifyResponse.ok) {
+          console.log('[DASHBOARD] Server token verification failed, redirecting to login');
+          localStorage.removeItem("adminToken");
+          router.push("/admin/login");
+          return;
+        }
+
+        const verifyData = await verifyResponse.json();
+        console.log('[DASHBOARD] Server token verification successful for user:', verifyData.user.email);
+        setIsAuthenticated(true);
+
+        // Fetch dashboard data from API
+        const response = await fetch('/api/admin/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setDashboardData(data);
+        } else {
+          console.error('Failed to fetch dashboard data');
+          // Set default empty data on error
+          setDashboardData({
+            totalUsers: 0,
+            contentStats: {
+              totalPosts: 0,
+              publishedPosts: 0,
+              draftPosts: 0,
+              totalProjects: 0,
+              liveProjects: 0,
+              devProjects: 0
+            },
+            recentActivities: [],
+            systemStatus: {}
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        // Set default empty data on error
+        setDashboardData({
+          totalUsers: 0,
+          contentStats: {
+            totalPosts: 0,
+            publishedPosts: 0,
+            draftPosts: 0,
+            totalProjects: 0,
+            liveProjects: 0,
+            devProjects: 0
+          },
+          recentActivities: [],
+          systemStatus: {}
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+
     // Cleanup
     return () => {
       document.body.style.background = '';
@@ -113,31 +172,38 @@ export default function AdminDashboardPage() {
   const statCards = [
     {
       title: "Total Blog Posts",
-      value: stats.totalPosts,
-      subtitle: `${stats.publishedPosts} published, ${stats.draftPosts} drafts`,
+      value: dashboardData.contentStats.totalPosts,
+      subtitle: `${dashboardData.contentStats.publishedPosts} published, ${dashboardData.contentStats.draftPosts} drafts`,
       color: "from-primary to-secondary",
       icon: "blog"
     },
     {
-      title: "Total Projects", 
-      value: stats.totalProjects,
-      subtitle: `${stats.liveProjects} live, ${stats.devProjects} in development`,
+      title: "Total Projects",
+      value: dashboardData.contentStats.totalProjects,
+      subtitle: `${dashboardData.contentStats.liveProjects} live, ${dashboardData.contentStats.devProjects} in development`,
       color: "from-accent to-neutral",
       icon: "projects"
     },
     {
       title: "Published Content",
-      value: stats.publishedPosts,
+      value: dashboardData.contentStats.publishedPosts,
       subtitle: "Live blog posts",
-      color: "from-secondary to-accent", 
+      color: "from-secondary to-accent",
       icon: "published"
     },
     {
       title: "Active Projects",
-      value: stats.liveProjects + stats.devProjects,
+      value: dashboardData.contentStats.liveProjects + dashboardData.contentStats.devProjects,
       subtitle: "Live + Development",
       color: "from-neutral to-primary",
       icon: "live"
+    },
+    {
+      title: "Total Users",
+      value: dashboardData.totalUsers,
+      subtitle: "Active users",
+      color: "from-accent to-primary",
+      icon: "users"
     }
   ];
 
@@ -226,8 +292,8 @@ export default function AdminDashboardPage() {
               <Typography variant="subheading" className="text-foreground mb-6">
                 Overview
               </Typography>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
                 {statCards.map((stat, index) => (
                   <motion.div
                     key={stat.title}
@@ -304,44 +370,30 @@ export default function AdminDashboardPage() {
               <Typography variant="subheading" className="text-foreground mb-6">
                 Recent Activity
               </Typography>
-              
+
               <Card className="p-6 bg-background/50 border-accent/20">
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-surface/30 rounded-lg">
-                    <span className="text-green-500">✅</span>
-                    <div className="flex-1">
-                      <Typography variant="body" className="text-foreground text-sm">
-                        Blog post "Getting Started with React" published
-                      </Typography>
-                      <Typography variant="body" className="text-foreground/60 text-xs">
-                        2 hours ago
-                      </Typography>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-surface/30 rounded-lg">
-                    <span className="text-blue-500">🔄</span>
-                    <div className="flex-1">
-                      <Typography variant="body" className="text-foreground text-sm">
-                        Project "Super Team" status updated to development
-                      </Typography>
-                      <Typography variant="body" className="text-foreground/60 text-xs">
-                        1 day ago
+                  {dashboardData.recentActivities.length > 0 ? (
+                    dashboardData.recentActivities.map((activity, index) => (
+                      <div key={index} className="flex items-center gap-3 p-3 bg-surface/30 rounded-lg">
+                        <span className="text-lg">{activity.icon}</span>
+                        <div className="flex-1">
+                          <Typography variant="body" className="text-foreground text-sm">
+                            {activity.message}
+                          </Typography>
+                          <Typography variant="body" className="text-foreground/60 text-xs">
+                            {activity.timeAgo}
+                          </Typography>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Typography variant="body" className="text-foreground/60">
+                        No recent activity to display
                       </Typography>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3 p-3 bg-surface/30 rounded-lg">
-                    <span className="text-purple-500">📝</span>
-                    <div className="flex-1">
-                      <Typography variant="body" className="text-foreground text-sm">
-                        New blog post draft "Building My First Game" created
-                      </Typography>
-                      <Typography variant="body" className="text-foreground/60 text-xs">
-                        3 days ago
-                      </Typography>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </Card>
             </motion.div>

@@ -4,8 +4,23 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Typography, Button, Card } from "@/components/ui";
 import { scrollReveal, staggerContainer } from "@/lib/animations";
+import { base64UrlDecode } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { projects, Project } from "@/data/projects";
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  longDescription: string;
+  technologies: string[];
+  liveUrl: string;
+  githubUrl?: string;
+  imageUrl?: string;
+  featured: boolean;
+  category: 'web' | 'game' | 'other';
+  year: string;
+  status: 'live' | 'development' | 'archived';
+}
 
 export default function AdminProjectsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,13 +29,27 @@ export default function AdminProjectsPage() {
   const [filter, setFilter] = useState<'all' | 'live' | 'development' | 'archived'>('all');
   const router = useRouter();
 
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/admin/projects');
+      if (response.ok) {
+        const data = await response.json();
+        setProjectList(data.projects || []);
+      } else {
+        console.error('Failed to fetch projects');
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
   useEffect(() => {
     // Force solid background on body
     document.body.style.background = '#fafaf9';
     document.body.style.backgroundImage = 'none';
     document.documentElement.style.background = '#fafaf9';
     document.documentElement.style.backgroundImage = 'none';
-    
+
     // Check authentication
     const token = localStorage.getItem("adminToken");
     if (!token) {
@@ -30,22 +59,23 @@ export default function AdminProjectsPage() {
 
     // Verify token
     try {
-      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const tokenData = JSON.parse(base64UrlDecode(token.split('.')[1]));
       if (tokenData.exp * 1000 < Date.now()) {
         localStorage.removeItem("adminToken");
         router.push("/admin/login");
         return;
       }
-      
+
       setIsAuthenticated(true);
-      setProjectList(projects);
+      // Fetch projects from API instead of using hardcoded data
+      fetchProjects();
     } catch (error) {
       localStorage.removeItem("adminToken");
       router.push("/admin/login");
     } finally {
       setIsLoading(false);
     }
-    
+
     // Cleanup
     return () => {
       document.body.style.background = '';
@@ -166,23 +196,23 @@ export default function AdminProjectsPage() {
             <motion.div variants={scrollReveal} className="flex items-center justify-between">
               <div className="flex items-center gap-8">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{projects.length}</div>
+                  <div className="text-2xl font-bold text-foreground">{projectList.length}</div>
                   <div className="text-sm text-foreground/60">Total Projects</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{projects.filter(p => p.status === 'live').length}</div>
+                  <div className="text-2xl font-bold text-green-600">{projectList.filter((p: Project) => p.status === 'live').length}</div>
                   <div className="text-sm text-foreground/60">Live</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600">{projects.filter(p => p.status === 'development').length}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{projectList.filter((p: Project) => p.status === 'development').length}</div>
                   <div className="text-sm text-foreground/60">In Development</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{projects.filter(p => p.status === 'archived').length}</div>
+                  <div className="text-2xl font-bold text-red-600">{projectList.filter((p: Project) => p.status === 'archived').length}</div>
                   <div className="text-sm text-foreground/60">Archived</div>
                 </div>
               </div>
-              
+
               <Button size="lg">
                 + New Project
               </Button>
@@ -289,18 +319,51 @@ export default function AdminProjectsPage() {
                       
                       {/* Actions */}
                       <div className="flex items-center gap-3 pt-4 border-t border-accent/10">
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {/* TODO: Implement edit functionality */}}
+                        >
                           Edit
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {/* TODO: Implement view functionality */}}
+                        >
                           View
                         </Button>
                         {project.liveUrl && (
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(project.liveUrl, '_blank')}
+                          >
                             Visit
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 ml-auto">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 ml-auto"
+                          onClick={async () => {
+                            if (confirm('Are you sure you want to delete this project?')) {
+                              try {
+                                const response = await fetch(`/api/admin/projects/${project.id}`, {
+                                  method: 'DELETE',
+                                });
+                                if (response.ok) {
+                                  fetchProjects(); // Refresh the list
+                                } else {
+                                  alert('Failed to delete project');
+                                }
+                              } catch (error) {
+                                console.error('Error deleting project:', error);
+                                alert('Error deleting project');
+                              }
+                            }
+                          }}
+                        >
                           Delete
                         </Button>
                       </div>

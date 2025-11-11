@@ -4,44 +4,114 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Typography, Button, Card } from "@/components/ui";
 import { scrollReveal, staggerContainer } from "@/lib/animations";
+import { base64UrlDecode } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
 export default function AdminSettingsPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [settings, setSettings] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
+  const fetchSettings = async (token: string) => {
+    try {
+      const response = await fetch('/api/admin/settings', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data.settings);
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
+  const saveSettings = async (settingsToSave: any[]) => {
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ settings: settingsToSave }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        await fetchSettings(token!); // Refresh settings
+        return { success: true, data };
+      } else {
+        return { success: false, error: 'Failed to save settings' };
+      }
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      return { success: false, error: 'Network error' };
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   useEffect(() => {
-    // Force solid background on body
+    const verifyAuthentication = async () => {
+      console.log('[SETTINGS] Starting authentication verification');
+      // Force solid background on body
     document.body.style.background = '#fafaf9';
     document.body.style.backgroundImage = 'none';
     document.documentElement.style.background = '#fafaf9';
     document.documentElement.style.backgroundImage = 'none';
-    
+
+    console.log('[SETTINGS] Checking authentication');
     // Check authentication
     const token = localStorage.getItem("adminToken");
     if (!token) {
+      console.log('[SETTINGS] No token found in localStorage, redirecting to login');
       router.push("/admin/login");
       return;
     }
+    console.log('[SETTINGS] Token found in localStorage');
 
-    // Verify token
-    try {
-      const tokenData = JSON.parse(atob(token.split('.')[1]));
-      if (tokenData.exp * 1000 < Date.now()) {
+      // Verify token with server
+      try {
+        console.log('[SETTINGS] Verifying token with server');
+        const verifyResponse = await fetch('/api/admin/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!verifyResponse.ok) {
+          console.log('[SETTINGS] Server token verification failed, redirecting to login');
+          localStorage.removeItem("adminToken");
+          router.push("/admin/login");
+          return;
+        }
+
+        const verifyData = await verifyResponse.json();
+        console.log('[SETTINGS] Server token verification successful for user:', verifyData.user.email);
+        setIsAuthenticated(true);
+
+        // Fetch settings after authentication
+        fetchSettings(token);
+      } catch (error) {
+        console.error('[SETTINGS] Token verification error:', error);
         localStorage.removeItem("adminToken");
         router.push("/admin/login");
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsAuthenticated(true);
-    } catch (error) {
-      localStorage.removeItem("adminToken");
-      router.push("/admin/login");
-    } finally {
-      setIsLoading(false);
-    }
-    
+    };
+
+    verifyAuthentication();
+
     // Cleanup
     return () => {
       document.body.style.background = '';
@@ -214,21 +284,65 @@ export default function AdminSettingsPage() {
               </div>
             </motion.div>
 
-            {/* Coming Soon Notice */}
+            {/* Settings Display */}
+            <motion.div variants={scrollReveal}>
+              <div className="space-y-6">
+                {Object.entries(settings).map(([category, categorySettings]) => (
+                  <Card key={category} className="p-6 bg-background/50 border-accent/20">
+                    <div className="space-y-4">
+                      <Typography variant="subheading" className="text-foreground capitalize">
+                        {category.replace('_', ' ')} Settings
+                      </Typography>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(categorySettings as any[]).map((setting) => (
+                          <div key={setting.key} className="space-y-2">
+                            <label className="block text-sm font-medium text-foreground/80">
+                              {setting.key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                            </label>
+                            <div className="text-sm text-foreground/60">
+                              {setting.description || 'No description available'}
+                            </div>
+                            <div className="text-xs text-foreground/50">
+                              Type: {setting.type} | Last updated: {new Date(setting.updatedAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+
+                {Object.keys(settings).length === 0 && (
+                  <Card className="p-8 bg-background/50 border-accent/20 text-center">
+                    <div className="space-y-4">
+                      <div className="text-3xl mb-2">⚙️</div>
+                      <Typography variant="subheading" className="text-foreground">
+                        No Settings Found
+                      </Typography>
+                      <Typography variant="body" className="text-foreground/70 max-w-md mx-auto">
+                        No settings have been configured yet. Settings will appear here once they are added to the database.
+                      </Typography>
+                    </div>
+                  </Card>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Development Notice */}
             <motion.div variants={scrollReveal}>
               <Card className="p-8 bg-background/50 border-accent/20 text-center">
                 <div className="space-y-4">
                   <div className="text-3xl mb-2">🚧</div>
                   <Typography variant="subheading" className="text-foreground">
-                    Settings Panel Under Development
+                    Settings Management In Development
                   </Typography>
                   <Typography variant="body" className="text-foreground/70 max-w-md mx-auto">
-                    The settings interface is currently being developed. 
-                    Advanced configuration options will be available soon.
+                    Full CRUD operations for settings management are being developed.
+                    Currently displaying existing settings from the database.
                   </Typography>
                   <div className="pt-4">
                     <Typography variant="body" className="text-foreground/60 text-sm">
-                      For now, settings can be modified directly in the code
+                      API endpoints are ready for settings management
                     </Typography>
                   </div>
                 </div>

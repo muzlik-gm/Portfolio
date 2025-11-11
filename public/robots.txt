@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /projects
+Allow: /blog
+Allow: /contact
+
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://muzlik.vercel.app/sitemap.xml

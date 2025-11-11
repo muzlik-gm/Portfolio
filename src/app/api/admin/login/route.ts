@@ -1,55 +1,104 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { dbConnect, User } from "@/lib/models";
+import { verifyPassword, generateToken } from "@/lib/auth";
+import { emailSchema } from "@/lib/validation";
+import { validateData } from "@/lib/validation";
+import { safeDbOperation } from "@/lib/database";
+import { AuthenticationError, createErrorResponse } from "@/lib/errors";
+import { z } from "zod";
+
+interface LoginRequest {
+  email: string;
+  password: string;
+}
 
 export async function POST(request: NextRequest) {
-  try {
-    const { username, password } = await request.json();
-
-    // Get admin credentials from environment variables
-    const adminUsername = process.env.ADMIN_USERNAME;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-    const jwtSecret = process.env.JWT_SECRET;
-
-    if (!adminUsername || !adminPassword || !jwtSecret) {
-      return NextResponse.json(
-        { message: "Server configuration error" },
-        { status: 500 }
+    try {
+      console.log('[LOGIN API] Login attempt received');
+      // Parse and validate request body
+      const body = await request.json();
+      console.log('[LOGIN API] Request body parsed');
+      const validatedData: LoginRequest = validateData(
+        z.object({
+          email: emailSchema,
+          password: z.string().min(1, 'Password is required'), // Basic validation, full check during verify
+        }),
+        body
       );
-    }
+      console.log('[LOGIN API] Data validated for email:', validatedData.email);
 
-    // Validate credentials
-    if (username !== adminUsername || password !== adminPassword) {
-      return NextResponse.json(
-        { message: "Invalid username or password" },
-        { status: 401 }
+      // Connect to database
+      await dbConnect();
+      console.log('[LOGIN API] Database connected');
+
+      // Find user by email with safe database operation
+      const user = await safeDbOperation(
+        () => User.findOne({ email: validatedData.email }),
+        'Failed to find user'
       );
-    }
+      console.log('[LOGIN API] User lookup result:', user ? 'found' : 'not found');
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        username: adminUsername,
-        role: "admin",
-        iat: Math.floor(Date.now() / 1000)
-      },
-      jwtSecret,
-      { expiresIn: "24h" }
-    );
-
-    return NextResponse.json({
-      message: "Login successful",
-      token,
-      user: {
-        username: adminUsername,
-        role: "admin"
+      if (!user || !user.isActive) {
+        console.log('[LOGIN API] User not found or inactive');
+        throw new AuthenticationError('Invalid email or password');
       }
-    });
 
-  } catch (error) {
-    console.error("Admin login error:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+      console.log('[LOGIN API] User found, verifying password');
+      // Verify password
+      const isPasswordValid = await verifyPassword(validatedData.password, user.password);
+      console.log('[LOGIN API] Password verification result:', isPasswordValid);
+
+      if (!isPasswordValid) {
+        console.log('[LOGIN API] Password verification failed');
+        throw new AuthenticationError('Invalid email or password');
+      }
+
+      console.log('[LOGIN API] Password verified, updating last login');
+
+     // Update last login with safe database operation
+     await safeDbOperation(async () => {
+       user.lastLogin = new Date();
+       return await user.save();
+     }, 'Failed to update last login');
+     console.log('[LOGIN API] Last login updated');
+
+     // Generate JWT token
+     console.log('[LOGIN API] Generating JWT token');
+     const token = generateToken({
+       id: user._id.toString(),
+       email: user.email,
+       role: user.role,
+       permissions: user.permissions,
+       firstName: user.firstName,
+       lastName: user.lastName,
+     });
+     console.log('[LOGIN API] Token generated successfully');
+
+     console.log('[LOGIN API] Login successful, returning response');
+     return NextResponse.json({
+       success: true,
+       data: {
+         message: "Login successful",
+         token,
+         user: {
+           id: user._id,
+           email: user.email,
+           role: user.role,
+           permissions: user.permissions,
+           firstName: user.firstName,
+           lastName: user.lastName,
+         }
+       }
+     });
+
+   } catch (error) {
+     console.error("Login error:", error);
+
+     // Handle different error types with consistent response format
+     const errorResponse = createErrorResponse(error as Error, '/api/admin/login');
+
+     return NextResponse.json(errorResponse, {
+       status: (error as any).statusCode || 500
+     });
+   }
+ }

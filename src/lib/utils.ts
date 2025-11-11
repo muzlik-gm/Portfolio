@@ -108,3 +108,21 @@ export function mapRange(
 ): number {
   return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
 }
+
+// Base64 URL decode function (for JWT payloads)
+export function base64UrlDecode(str: string): string {
+  if (!str || typeof str !== 'string') {
+    return '';
+  }
+  // Convert base64url to base64 by replacing chars and adding padding
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = base64.length % 4;
+  if (padding > 0) {
+    base64 += '='.repeat(4 - padding);
+  }
+  try {
+    return atob(base64);
+  } catch (error) {
+    return '';
+  }
+}
