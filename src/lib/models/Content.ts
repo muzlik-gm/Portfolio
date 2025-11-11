@@ -79,6 +79,7 @@ const ContentSchema: Schema = new Schema({
     unique: true,
     lowercase: true,
     trim: true,
+    index: true,
   },
   content: {
     type: String,

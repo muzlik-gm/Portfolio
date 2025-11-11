@@ -39,6 +39,7 @@ const SettingsSchema: Schema = new Schema({
     unique: true,
     lowercase: true,
     trim: true,
+    index: true,
   },
   value: {
     type: Schema.Types.Mixed,

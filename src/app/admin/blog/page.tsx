@@ -78,36 +78,46 @@ export default function AdminBlogPage() {
   };
 
   useEffect(() => {
-    // Force solid background on body
-    document.body.style.background = '#fafaf9';
-    document.body.style.backgroundImage = 'none';
-    document.documentElement.style.background = '#fafaf9';
-    document.documentElement.style.backgroundImage = 'none';
+    const verifyAuthentication = async () => {
+      // Force solid background on body
+      document.body.style.background = '#fafaf9';
+      document.body.style.backgroundImage = 'none';
+      document.documentElement.style.background = '#fafaf9';
+      document.documentElement.style.backgroundImage = 'none';
 
-    // Check authentication
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
+      // Verify authentication with server using cookies
+      try {
+        console.log('[BLOG] Verifying authentication with server');
+        const verifyResponse = await fetch('/api/admin/verify', {
+          method: 'GET',
+          credentials: 'include', // Include cookies
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
 
-    // Verify token
-    try {
-      const tokenData = JSON.parse(base64UrlDecode(token.split('.')[1]));
-      if (tokenData.exp * 1000 < Date.now()) {
-        localStorage.removeItem("adminToken");
+        console.log('[BLOG] Verify response status:', verifyResponse.status);
+        if (!verifyResponse.ok) {
+          console.log('[BLOG] Server verification failed, redirecting to login');
+          router.push("/admin/login");
+          return;
+        }
+
+        const verifyData = await verifyResponse.json();
+        console.log('[BLOG] Server verification successful for user:', verifyData.user?.email);
+        setIsAuthenticated(true);
+
+        // Fetch posts after authentication
+        fetchPosts();
+      } catch (error) {
+        console.error('[BLOG] Authentication verification error:', error);
         router.push("/admin/login");
-        return;
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      setIsAuthenticated(true);
-      fetchPosts();
-    } catch (error) {
-      localStorage.removeItem("adminToken");
-      router.push("/admin/login");
-    } finally {
-      setIsLoading(false);
-    }
+    verifyAuthentication();
 
     // Cleanup
     return () => {

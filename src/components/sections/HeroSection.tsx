@@ -4,13 +4,19 @@ import { motion } from "framer-motion";
 import { Section, Typography, Button } from "@/components/ui";
 import { ParallaxBackground, FloatingParticles, BreathingGlow } from "@/components/effects";
 import { createWordRevealVariants, staggerContainer } from "@/lib/animations";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useTypingEffect } from "@/hooks/useTypingEffect";
 import { Atom, FileCode2, Server } from "lucide-react";
 
 export function HeroSection() {
+  const prefersReducedMotion = useReducedMotion();
   const name = "Hamza";
   const tagline = "Providing Best Experience";
   const subtitle = "Web & Game Developer from Pakistan";
-  
+  const description = "At the Age of 17, I'm passionate towards Developement. I like Programming alot, and like to explore new things.";
+
+  const { displayText: typedDescription, isComplete: typingComplete } = useTypingEffect(description, 50);
+
   const nameWords = name.split("");
   const taglineWords = tagline.split(" ");
 
@@ -69,18 +75,18 @@ export function HeroSection() {
         <BreathingGlow intensity="medium" className="inline-block">
           <motion.div
             className="typography-hero font-bold text-foreground"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
+            variants={prefersReducedMotion ? undefined : staggerContainer}
+            initial={prefersReducedMotion ? undefined : "hidden"}
+            animate={prefersReducedMotion ? undefined : "visible"}
           >
             {nameWords.map((letter, index) => (
               <motion.span
                 key={index}
-                variants={createWordRevealVariants(0.2)}
+                variants={prefersReducedMotion ? undefined : createWordRevealVariants(0.2)}
                 custom={index}
                 className="inline-block"
-                whileHover={{ 
-                  scale: 1.1, 
+                whileHover={prefersReducedMotion ? undefined : {
+                  scale: 1.1,
                   color: "var(--color-accent)",
                   transition: { duration: 0.2 }
                 }}
@@ -94,14 +100,14 @@ export function HeroSection() {
         {/* Animated Tagline */}
         <motion.div
           className="typography-heading text-accent/90 font-medium"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
+          variants={prefersReducedMotion ? undefined : staggerContainer}
+          initial={prefersReducedMotion ? undefined : "hidden"}
+          animate={prefersReducedMotion ? undefined : "visible"}
         >
           {taglineWords.map((word, index) => (
             <motion.span
               key={index}
-              variants={createWordRevealVariants(1)}
+              variants={prefersReducedMotion ? undefined : createWordRevealVariants(1)}
               custom={index}
               className="inline-block mr-3 text-reveal"
             >
@@ -112,9 +118,9 @@ export function HeroSection() {
 
         {/* Subtitle */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : { delay: 2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <Typography variant="subheading" className="text-foreground/70 font-normal">
             {subtitle}
@@ -123,23 +129,28 @@ export function HeroSection() {
 
         {/* Description */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2.5, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : { delay: 2.5, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="max-w-2xl mx-auto"
         >
           <Typography variant="body" className="text-foreground/80 leading-relaxed">
-            At the Age of 17, I'm passionate towards Developement. 
-            I like Programming alot, and like to explore new things.
-            
+            {typedDescription}
+            {!typingComplete && (
+              <motion.span
+                className="inline-block w-0.5 h-5 bg-accent ml-1"
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.8, repeat: Infinity }}
+              />
+            )}
           </Typography>
         </motion.div>
 
         {/* Call to Action Buttons */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : { delay: 3, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="flex flex-col sm:flex-row gap-6 justify-center items-center pt-12"
         >
           <div className="relative group">
@@ -167,9 +178,9 @@ export function HeroSection() {
 
         {/* Personal Info Cards */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3.5, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          transition={prefersReducedMotion ? { duration: 0.01 } : { delay: 3.5, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="grid grid-cols-2 md:flex md:flex-wrap justify-center gap-4 md:gap-6 pt-12 max-w-2xl mx-auto"
         >
           {[
@@ -181,15 +192,15 @@ export function HeroSection() {
             <motion.div
               key={item.label}
               className="bg-surface/30 backdrop-blur-sm border border-accent/10 rounded-xl px-4 py-3 md:px-6 md:py-4 text-center"
-              whileHover={{ 
-                y: -4, 
+              whileHover={prefersReducedMotion ? undefined : {
+                y: -4,
                 boxShadow: "0 8px 30px rgba(139, 99, 92, 0.15)",
                 transition: { duration: 0.3 }
               }}
-              initial={{ opacity: 0, y: 20 }}
+              initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                delay: 3.5 + index * 0.1, 
+              transition={prefersReducedMotion ? { duration: 0.01 } : {
+                delay: 3.5 + index * 0.1,
                 duration: 0.6,
                 ease: [0.25, 0.46, 0.45, 0.94]
               }}
@@ -208,20 +219,20 @@ export function HeroSection() {
       {/* Scroll Indicator */}
       <motion.div
         className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-20"
-        initial={{ opacity: 0, y: 20 }}
+        initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 4, duration: 0.8 }}
+        transition={prefersReducedMotion ? { duration: 0.01 } : { delay: 4, duration: 0.8 }}
       >
         <motion.div
           className="w-6 h-10 border-2 border-accent/30 rounded-full flex justify-center bg-background/20 backdrop-blur-sm"
-          animate={{ 
+          animate={prefersReducedMotion ? undefined : {
             borderColor: ["rgba(139, 99, 92, 0.3)", "rgba(139, 99, 92, 0.8)", "rgba(139, 99, 92, 0.3)"]
           }}
           transition={{ duration: 2, repeat: Infinity }}
         >
           <motion.div
             className="w-1 h-3 bg-accent rounded-full mt-2"
-            animate={{ y: [0, 12, 0] }}
+            animate={prefersReducedMotion ? undefined : { y: [0, 12, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           />
         </motion.div>

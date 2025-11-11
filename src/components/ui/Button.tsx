@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
 import { theme, motionVariants } from "@/lib/theme";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface ButtonProps {
   children: ReactNode;
@@ -14,15 +15,16 @@ interface ButtonProps {
   disabled?: boolean;
 }
 
-export function Button({ 
-  children, 
-  variant = "primary", 
-  size = "md", 
-  onClick, 
-  href, 
+export function Button({
+  children,
+  variant = "primary",
+  size = "md",
+  onClick,
+  href,
   className = "",
-  disabled = false 
+  disabled = false
 }: ButtonProps) {
+  const prefersReducedMotion = useReducedMotion();
   const baseClasses = "inline-flex items-center justify-center font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
   
   const variantClasses = {
@@ -48,8 +50,8 @@ export function Button({
         className={`${classes} relative overflow-hidden`}
         variants={motionVariants.gentleLift}
         initial="rest"
-        whileHover="hover"
-        whileTap={{ scale: 0.98 }}
+        whileHover={prefersReducedMotion ? undefined : "hover"}
+        whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as any }}
         target={href.startsWith("http") ? "_blank" : undefined}
         rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
@@ -73,8 +75,8 @@ export function Button({
       disabled={disabled}
       variants={motionVariants.gentleLift}
       initial="rest"
-      whileHover={disabled ? "rest" : "hover"}
-      whileTap={disabled ? "rest" : { scale: 0.98 }}
+      whileHover={disabled || prefersReducedMotion ? "rest" : "hover"}
+      whileTap={disabled || prefersReducedMotion ? "rest" : { scale: 0.98 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as any }}
     >
       {/* Light sweep effect */}

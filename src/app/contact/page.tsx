@@ -7,33 +7,34 @@ import { ParallaxBackground, BreathingGlow } from "@/components/effects";
 import { motion } from "framer-motion";
 import { scrollReveal, staggerContainer } from "@/lib/animations";
 import { Briefcase, GraduationCap, Hand, Mail, Github, Linkedin, Twitter, MapPin, Clock } from "lucide-react";
+import { APP_CONFIG } from "@/lib/constants";
 
 export default function ContactPage() {
   const socialLinks = [
     {
       name: "Email",
-      href: "mailto:emulsion@wearehackerone.com",
+      href: `mailto:${APP_CONFIG.contact.email}`,
       icon: "email",
       description: "Drop me a line",
       color: "from-red-500 to-red-600"
     },
     {
       name: "GitHub",
-      href: "https://github.com/muzlik-gm",
+      href: APP_CONFIG.social.github,
       icon: "github",
       description: "Check out my code",
       color: "from-gray-700 to-gray-900"
     },
     {
       name: "LinkedIn",
-      href: "https://www.linkedin.com/in/muzlik/",
+      href: APP_CONFIG.social.linkedin,
       icon: "linkedin",
       description: "Let's connect professionally",
       color: "from-blue-600 to-blue-700"
     },
     {
       name: "Twitter",
-      href: "https://x.com/muzlik-gm",
+      href: APP_CONFIG.social.twitter,
       icon: "twitter",
       description: "Follow my journey",
       color: "from-sky-400 to-sky-500"
@@ -45,21 +46,21 @@ export default function ContactPage() {
       title: "Project Collaboration",
       description: "Have an exciting project idea? Let's build something amazing together.",
       action: "Discuss Project",
-      href: "mailto:emulsion@wearehackerone.com?subject=Project Collaboration",
+      href: `mailto:${APP_CONFIG.contact.email}?subject=Project Collaboration`,
       icon: Briefcase
     },
     {
       title: "Mentorship & Learning",
       description: "Questions about development? I'm happy to share knowledge and learn together.",
       action: "Ask Questions",
-      href: "mailto:hamza@example.com?subject=Mentorship",
+      href: `mailto:${APP_CONFIG.contact.email}?subject=Mentorship`,
       icon: GraduationCap
     },
     {
       title: "Just Say Hello",
       description: "Want to connect with a fellow developer? I'd love to hear from you!",
       action: "Say Hi",
-      href: "mailto:hamza@example.com?subject=Hello",
+      href: `mailto:${APP_CONFIG.contact.email}?subject=Hello`,
       icon: Hand
     }
   ];
@@ -121,7 +122,7 @@ export default function ContactPage() {
           >
             <div className="flex items-center gap-3">
               <MapPin className="text-accent" size={20} />
-              <span className="text-foreground/80">Pakistan</span>
+              <span className="text-foreground/80">{APP_CONFIG.contact.location}</span>
             </div>
             <div className="flex items-center gap-3">
               <Clock className="text-accent" size={20} />
@@ -270,8 +271,8 @@ export default function ContactPage() {
               <Typography variant="body" className="text-foreground/80 mb-4">
                 Prefer a direct approach?
               </Typography>
-              <Button 
-                href="mailto:hamza@example.com" 
+              <Button
+                href={`mailto:${APP_CONFIG.contact.email}`}
                 size="lg"
                 className="min-w-[180px]"
               >

@@ -201,22 +201,22 @@ export function AboutSection() {
             </Typography>
             
             <div className="relative">
-              {/* Timeline Line */}
-              <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-secondary" />
-              
+              {/* Timeline Line - Hide on mobile, show on larger screens */}
+              <div className="hidden md:block absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-secondary" />
+
               {/* Timeline Items */}
-              <div className="space-y-8">
+              <div className="space-y-6 md:space-y-8">
                 {timeline.map((item, index) => (
                   <motion.div
                     key={`${item.year}-${index}`}
                     variants={scrollReveal}
                     transition={{ delay: index * 0.2 }}
-                    className="relative flex items-start gap-6"
+                    className="relative flex flex-col md:flex-row items-start gap-4 md:gap-6"
                   >
-                    {/* Timeline Dot */}
-                    <div className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center border-2 ${
-                      item.type === 'milestone' 
-                        ? 'bg-primary border-primary/30' 
+                    {/* Timeline Dot - Adjust positioning for mobile */}
+                    <div className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${
+                      item.type === 'milestone'
+                        ? 'bg-primary border-primary/30'
                         : item.type === 'project'
                         ? 'bg-accent border-accent/30'
                         : 'bg-secondary border-secondary/30'
@@ -225,14 +225,14 @@ export function AboutSection() {
                         {item.year.slice(-2)}
                       </span>
                     </div>
-                    
-                    {/* Timeline Content */}
-                    <div className="flex-1 bg-surface/20 backdrop-blur-sm rounded-xl p-6 border border-accent/10 hover:border-accent/20 transition-colors">
-                      <div className="flex items-center gap-3 mb-2">
+
+                    {/* Timeline Content - Full width on mobile, flex-1 on larger screens */}
+                    <div className="w-full md:flex-1 bg-surface/20 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-accent/10 hover:border-accent/20 transition-colors">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                         <Typography variant="body" className="font-semibold text-foreground">
                           {item.title}
                         </Typography>
-                        <span className="text-xs text-foreground/50 font-medium">
+                        <span className="text-xs text-foreground/50 font-medium self-start sm:self-center">
                           {item.year}
                         </span>
                       </div>

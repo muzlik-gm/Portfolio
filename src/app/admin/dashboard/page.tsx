@@ -242,8 +242,15 @@ export default function AdminDashboardPage() {
       title: "Site Settings",
       description: "Configure portfolio settings",
       action: "Settings",
-      href: "/admin/settings", 
+      href: "/admin/settings",
       icon: "settings"
+    },
+    {
+      title: "Manage Messages",
+      description: "View and respond to contact form submissions",
+      action: "View Messages",
+      href: "/admin/messages",
+      icon: "messages"
     }
   ];
 

@@ -253,13 +253,20 @@ function ProjectCard({
   );
 }
 
-function ProjectModal({ 
-  project, 
-  onClose 
-}: { 
-  project: Project; 
-  onClose: () => void; 
+function ProjectModal({
+  project,
+  onClose
+}: {
+  project: Project;
+  onClose: () => void;
 }) {
+  // Handle keyboard events for accessibility
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+  };
+
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -267,22 +274,29 @@ function ProjectModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
+      onKeyDown={handleKeyDown}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-background/80 backdrop-blur-md" />
-      
+
       {/* Modal Content */}
       <motion.div
-        className="relative bg-background border border-accent/20 rounded-3xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-strong"
+        className="relative bg-background border border-accent/20 rounded-3xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-strong focus:outline-none"
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
         onClick={(e) => e.stopPropagation()}
+        tabIndex={-1}
+        ref={(el) => el?.focus()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-surface/50 hover:bg-accent/20 transition-colors"
+          className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-surface/50 hover:bg-accent/20 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+          aria-label="Close modal"
         >
           ×
         </button>

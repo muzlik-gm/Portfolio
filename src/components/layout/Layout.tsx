@@ -3,6 +3,7 @@
 import { ReactNode, Suspense, useEffect } from "react";
 import { Navigation } from "./Navigation";
 import { Footer } from "./Footer";
+import { ErrorBoundary } from "./ErrorBoundary";
 import { useSmoothScroll } from "@/hooks/useSmoothScroll";
 import { useScrollAnimations } from "@/hooks/useScrollAnimations";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -38,10 +39,10 @@ export function Layout({ children }: LayoutProps) {
   }, [prefersReducedMotion, lenisRef]);
 
   return (
-    <>
+    <ErrorBoundary>
       {/* Accessibility */}
       <SkipLink />
-      
+
       {/* Performance optimized effects */}
       <Suspense fallback={null}>
         {!prefersReducedMotion && (
@@ -55,16 +56,16 @@ export function Layout({ children }: LayoutProps) {
           </>
         )}
       </Suspense>
-      
+
       <div className="min-h-screen bg-background text-foreground relative z-10">
         <Navigation />
         <main id="main-content" className="relative" role="main">
           {children}
         </main>
-        
+
         {/* Footer */}
         <Footer />
       </div>
-    </>
+    </ErrorBoundary>
   );
 }

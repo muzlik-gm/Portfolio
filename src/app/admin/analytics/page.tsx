@@ -13,36 +13,44 @@ export default function AdminAnalyticsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Force solid background on body
-    document.body.style.background = '#fafaf9';
-    document.body.style.backgroundImage = 'none';
-    document.documentElement.style.background = '#fafaf9';
-    document.documentElement.style.backgroundImage = 'none';
-    
-    // Check authentication
-    const token = localStorage.getItem("adminToken");
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
+    const verifyAuthentication = async () => {
+      // Force solid background on body
+      document.body.style.background = '#fafaf9';
+      document.body.style.backgroundImage = 'none';
+      document.documentElement.style.background = '#fafaf9';
+      document.documentElement.style.backgroundImage = 'none';
 
-    // Verify token
-    try {
-      const tokenData = JSON.parse(base64UrlDecode(token.split('.')[1]));
-      if (tokenData.exp * 1000 < Date.now()) {
-        localStorage.removeItem("adminToken");
+      // Verify authentication with server using cookies
+      try {
+        console.log('[ANALYTICS] Verifying authentication with server');
+        const verifyResponse = await fetch('/api/admin/verify', {
+          method: 'GET',
+          credentials: 'include', // Include cookies
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('[ANALYTICS] Verify response status:', verifyResponse.status);
+        if (!verifyResponse.ok) {
+          console.log('[ANALYTICS] Server verification failed, redirecting to login');
+          router.push("/admin/login");
+          return;
+        }
+
+        const verifyData = await verifyResponse.json();
+        console.log('[ANALYTICS] Server verification successful for user:', verifyData.user?.email);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('[ANALYTICS] Authentication verification error:', error);
         router.push("/admin/login");
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsAuthenticated(true);
-    } catch (error) {
-      localStorage.removeItem("adminToken");
-      router.push("/admin/login");
-    } finally {
-      setIsLoading(false);
-    }
-    
+    };
+
+    verifyAuthentication();
+
     // Cleanup
     return () => {
       document.body.style.background = '';

@@ -1,11 +1,18 @@
 // Application constants and configuration
 export const APP_CONFIG = {
-  name: "Hamza Portfolio",
+  name: process.env.SITE_NAME || "Hamza Portfolio",
   version: "1.0.0",
-  author: "Hamza",
-  description: "Portfolio of Hamza, a 17-year-old web and game developer from Pakistan",
-  url: "https://hamza-portfolio.vercel.app",
-  
+  author: process.env.SITE_AUTHOR || "Hamza",
+  description: process.env.SITE_DESCRIPTION || "Portfolio of Hamza, a 17-year-old web and game developer from Pakistan",
+  url: process.env.SITE_URL || "https://muzlik.vercel.app",
+
+  // SEO settings
+  seo: {
+    title: process.env.SEO_TITLE || "Hamza - Web & Game Developer",
+    description: process.env.SEO_DESCRIPTION || "Portfolio of Hamza, a 17-year-old web and game developer from Pakistan",
+    keywords: process.env.SEO_KEYWORDS || "web developer, game developer, React, Next.js, Unity",
+  },
+
   // Performance settings
   performance: {
     targetFPS: 60,
@@ -13,7 +20,7 @@ export const APP_CONFIG = {
     debounceDelay: 100,
     throttleDelay: 16, // ~60fps
   },
-  
+
   // Animation settings
   animations: {
     defaultDuration: 0.6,
@@ -21,28 +28,42 @@ export const APP_CONFIG = {
     staggerDelay: 0.1,
     reducedMotionDuration: 0.01,
   },
-  
+
   // Breakpoints
   breakpoints: {
     mobile: 768,
     tablet: 1024,
     desktop: 1280,
   },
-  
-  // Contact information
-  contact: {
-    email: "hamza@example.com",
-    location: "Pakistan",
-    timezone: "PKT",
-    availability: "Available for freelance projects",
+
+  // Theme settings (for future dark mode implementation)
+  theme: {
+    defaultMode: process.env.THEME_DEFAULT || "light",
+    enableDarkMode: process.env.ENABLE_DARK_MODE === "true",
   },
-  
-  // Social links
+
+  // Contact information (now configurable via environment variables)
+  contact: {
+    email: process.env.CONTACT_EMAIL || "hamza@example.com",
+    location: process.env.CONTACT_LOCATION || "Pakistan",
+    timezone: process.env.CONTACT_TIMEZONE || "PKT",
+    availability: process.env.CONTACT_AVAILABILITY || "Available for freelance projects",
+  },
+
+  // Social links (now configurable via environment variables)
   social: {
-    github: "https://github.com/hamza",
-    linkedin: "https://linkedin.com/in/hamza",
-    twitter: "https://twitter.com/hamza",
-    discord: "https://discord.com/users/hamza",
+    github: process.env.SOCIAL_GITHUB || "https://github.com/hamza",
+    linkedin: process.env.SOCIAL_LINKEDIN || "https://linkedin.com/in/hamza",
+    twitter: process.env.SOCIAL_TWITTER || "https://twitter.com/hamza",
+    discord: process.env.SOCIAL_DISCORD || "https://discord.com/users/hamza",
+  },
+
+  // Feature flags
+  features: {
+    enableBlog: process.env.ENABLE_BLOG !== "false",
+    enableProjects: process.env.ENABLE_PROJECTS !== "false",
+    enableContact: process.env.ENABLE_CONTACT !== "false",
+    enableAnalytics: process.env.ENABLE_ANALYTICS === "true",
   },
 } as const;
 

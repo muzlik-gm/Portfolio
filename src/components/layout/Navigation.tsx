@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { scrollToElement } from "@/lib/utils";
+import { useSmoothScroll } from "@/hooks/useSmoothScroll";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface NavigationProps {
   className?: string;
@@ -21,6 +23,8 @@ export function Navigation({ className = "" }: NavigationProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const lenis = useSmoothScroll();
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     setMounted(true);
@@ -77,10 +81,18 @@ export function Navigation({ className = "" }: NavigationProps) {
       if (currentPath !== item.href) {
         window.location.href = item.href;
       } else {
-        scrollToElement(item.id, 80);
+        if (lenis.current && !prefersReducedMotion) {
+          lenis.current.scrollTo(`#${item.id}`, { offset: -80 });
+        } else {
+          scrollToElement(item.id, 80);
+        }
       }
     } else {
-      scrollToElement(item.id, 80);
+      if (lenis.current && !prefersReducedMotion) {
+        lenis.current.scrollTo(`#${item.id}`, { offset: -80 });
+      } else {
+        scrollToElement(item.id, 80);
+      }
     }
   };
 
@@ -91,7 +103,7 @@ export function Navigation({ className = "" }: NavigationProps) {
   return (
     <motion.nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${className}`}
-      initial={{ y: -100 }}
+      initial={prefersReducedMotion ? { y: 0 } : { y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
@@ -124,8 +136,8 @@ export function Navigation({ className = "" }: NavigationProps) {
                     ? "text-accent" 
                     : "text-foreground/70 hover:text-foreground"
                 }`}
-                whileHover={{ y: -2 }}
-                whileTap={{ y: 0 }}
+                whileHover={prefersReducedMotion ? {} : { y: -2 }}
+                whileTap={prefersReducedMotion ? {} : { y: 0 }}
               >
                 {item.label}
                 
@@ -154,17 +166,18 @@ export function Navigation({ className = "" }: NavigationProps) {
   );
 }
 
-function MobileNavigation({ 
-  activeSection, 
-  onNavClick 
-}: { 
-  activeSection: string; 
-  onNavClick: (item: typeof navigationItems[0]) => void; 
+function MobileNavigation({
+  activeSection,
+  onNavClick
+}: {
+  activeSection: string;
+  onNavClick: (item: typeof navigationItems[0]) => void;
 }) {
+  const prefersReducedMotion = useReducedMotion();
   return (
     <motion.nav
       className="fixed bottom-6 left-6 right-6 z-50"
-      initial={{ y: 100 }}
+      initial={prefersReducedMotion ? { y: 0 } : { y: 100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
@@ -179,7 +192,7 @@ function MobileNavigation({
                   ? "text-accent" 
                   : "text-foreground/70"
               }`}
-              whileTap={{ scale: 0.95 }}
+              whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
             >
               <div className={`w-2 h-2 rounded-full mb-1 transition-colors duration-300 ${
                 activeSection === item.id ? "bg-accent" : "bg-foreground/30"

@@ -4,13 +4,15 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button, Typography } from "@/components/ui";
 import { scrollReveal } from "@/lib/animations";
-import { CONTACT_CONFIG } from "@/lib/constants";
+import { APP_CONFIG } from "@/lib/constants";
 
 interface FormData {
   name: string;
   email: string;
   subject: string;
   message: string;
+  // Honeypot field for spam protection
+  website?: string;
 }
 
 interface FormErrors {
@@ -18,6 +20,8 @@ interface FormErrors {
   email?: string;
   subject?: string;
   message?: string;
+  // General error message for rate limiting, etc.
+  general?: string;
 }
 
 export function ContactForm() {
@@ -106,9 +110,9 @@ export function ContactForm() {
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error when user starts typing
-    if (errors[field]) {
+
+    // Clear field-specific error when user starts typing
+    if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
@@ -131,6 +135,7 @@ export function ContactForm() {
           onChange={(value) => handleChange('name', value)}
           error={errors.name}
           placeholder="Your full name"
+          required
         />
         
         <FormField
@@ -140,6 +145,7 @@ export function ContactForm() {
           onChange={(value) => handleChange('email', value)}
           error={errors.email}
           placeholder="your.email@example.com"
+          required
         />
       </div>
 
@@ -151,6 +157,7 @@ export function ContactForm() {
         onChange={(value) => handleChange('subject', value)}
         error={errors.subject}
         placeholder="What's this about?"
+        required
       />
 
       {/* Message */}
@@ -162,7 +169,21 @@ export function ContactForm() {
         error={errors.message}
         placeholder="Tell me about your project, ideas, or just say hello..."
         rows={6}
+        required
       />
+
+      {/* Hidden honeypot field for spam protection */}
+      <div style={{ display: 'none' }}>
+        <label htmlFor="website">Website (leave blank)</label>
+        <input
+          id="website"
+          name="website"
+          type="text"
+          value={formData.website || ''}
+          onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+          autoComplete="off"
+        />
+      </div>
 
       {/* Submit Button */}
       <div className="flex flex-col items-center space-y-4">
@@ -170,6 +191,7 @@ export function ContactForm() {
           type="submit"
           disabled={isSubmitting}
           className="min-w-[200px] px-8 py-4 text-lg rounded-2xl bg-gradient-to-r from-primary to-secondary text-background font-semibold hover:from-secondary hover:to-primary shadow-medium hover:shadow-strong border border-primary/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-describedby={errors.general ? "general-error" : undefined}
         >
           {isSubmitting ? (
             <div className="flex items-center gap-2 justify-center">
@@ -181,6 +203,19 @@ export function ContactForm() {
           )}
         </button>
 
+        {/* General error message */}
+        {errors.general && (
+          <div
+            id="general-error"
+            className="bg-red-500/10 border border-red-500/20 rounded-xl p-4"
+            role="alert"
+          >
+            <Typography variant="body" className="text-red-600 font-medium text-center">
+              {errors.general}
+            </Typography>
+          </div>
+        )}
+
         {/* Status Messages */}
         <AnimatePresence>
           {submitStatus === 'success' && (
@@ -189,6 +224,8 @@ export function ContactForm() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               className="text-center"
+              role="status"
+              aria-live="polite"
             >
               <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
                 <Typography variant="body" className="text-green-600 font-medium">
@@ -197,13 +234,15 @@ export function ContactForm() {
               </div>
             </motion.div>
           )}
-          
+
           {submitStatus === 'error' && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               className="text-center"
+              role="alert"
+              aria-live="assertive"
             >
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
                 <Typography variant="body" className="text-red-600 font-medium">
@@ -226,34 +265,45 @@ interface FormFieldProps {
   error?: string;
   placeholder?: string;
   rows?: number;
+  required?: boolean;
 }
 
-function FormField({ 
-  label, 
-  type, 
-  value, 
-  onChange, 
-  error, 
-  placeholder, 
-  rows = 4 
+function FormField({
+  label,
+  type,
+  value,
+  onChange,
+  error,
+  placeholder,
+  rows = 4,
+  required = false
 }: FormFieldProps) {
   const baseClasses = "w-full px-4 py-3 bg-surface/30 border border-accent/20 rounded-xl text-foreground placeholder-foreground/50 focus:outline-none focus:border-accent focus:bg-surface/50 transition-all duration-300";
   const errorClasses = error ? "border-red-500/50 focus:border-red-500" : "";
-  
+  const inputId = `field-${label.toLowerCase().replace(/\s+/g, '-')}`;
+
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-foreground/80">
+      <label
+        htmlFor={inputId}
+        className="block text-sm font-medium text-foreground/80"
+      >
         {label}
+        {required && <span className="text-red-500 ml-1" aria-label="required">*</span>}
       </label>
-      
+
       {type === 'textarea' ? (
         <motion.textarea
+          id={inputId}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={rows}
+          required={required}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${inputId}-error` : undefined}
           className={`${baseClasses} ${errorClasses} resize-none`}
-          whileFocus={{ 
+          whileFocus={{
             boxShadow: "0 0 0 3px rgba(139, 99, 92, 0.1)",
             scale: 1.01
           }}
@@ -261,26 +311,32 @@ function FormField({
         />
       ) : (
         <motion.input
+          id={inputId}
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          required={required}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${inputId}-error` : undefined}
           className={`${baseClasses} ${errorClasses}`}
-          whileFocus={{ 
+          whileFocus={{
             boxShadow: "0 0 0 3px rgba(139, 99, 92, 0.1)",
             scale: 1.01
           }}
           transition={{ duration: 0.2 }}
         />
       )}
-      
+
       <AnimatePresence>
         {error && (
           <motion.div
+            id={`${inputId}-error`}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="text-red-500 text-sm"
+            role="alert"
           >
             {error}
           </motion.div>

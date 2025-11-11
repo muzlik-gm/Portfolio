@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbConnect, User, Content, Analytics, Settings } from '@/lib/models';
+import { dbConnect, User, Content, Analytics, Settings, Message } from '@/lib/models';
 import { verifyAdminToken, getTokenFromRequest, getAuthCookie } from '@/lib/auth';
 import { getCachedData, cache } from '@/lib/cache';
 
@@ -48,6 +48,32 @@ export async function GET(request: NextRequest) {
       `${cacheKey}:totalUsers`,
       () => User.countDocuments({ isActive: true }),
       { ttl: 600, skipCache: redisUnavailable }
+    );
+
+    // Get message statistics with caching (5 minutes TTL)
+    const messageStats = await getCachedData(
+      `${cacheKey}:messageStats`,
+      () => Message.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            unread: {
+              $sum: { $cond: [{ $eq: ['$status', 'unread'] }, 1, 0] }
+            },
+            read: {
+              $sum: { $cond: [{ $eq: ['$status', 'read'] }, 1, 0] }
+            },
+            responded: {
+              $sum: { $cond: [{ $eq: ['$status', 'responded'] }, 1, 0] }
+            },
+            archived: {
+              $sum: { $cond: [{ $eq: ['$status', 'archived'] }, 1, 0] }
+            }
+          }
+        }
+      ]),
+      { ttl: 300, skipCache: redisUnavailable }
     );
 
     // Get content statistics by type with caching (5 minutes TTL) - critical data, skip cache if Redis fails
@@ -225,6 +251,13 @@ export async function GET(request: NextRequest) {
     // Prepare response data
     const responseData = {
       totalUsers,
+      messageStats: {
+        totalMessages: messageStats[0]?.total || 0,
+        unreadMessages: messageStats[0]?.unread || 0,
+        readMessages: messageStats[0]?.read || 0,
+        respondedMessages: messageStats[0]?.responded || 0,
+        archivedMessages: messageStats[0]?.archived || 0
+      },
       contentStats: {
         totalPosts: blogStats[0]?.total || 0,
         publishedPosts: blogStats[0]?.published || 0,
