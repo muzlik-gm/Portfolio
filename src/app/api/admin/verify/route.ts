@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken, verifyAdminToken, getTokenFromRequest } from "@/lib/auth";
+import { verifyToken, verifyAdminToken, getTokenFromRequest, getAuthCookie } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
     console.log('[VERIFY API] Verifying token request received');
-    const token = getTokenFromRequest(request);
+    let token = getTokenFromRequest(request);
+
+    // If no token in header, try to get from cookie
+    if (!token) {
+      token = getAuthCookie(request);
+    }
 
     if (!token) {
       console.log('[VERIFY API] No token provided in request');
@@ -18,12 +23,12 @@ export async function GET(request: NextRequest) {
 
     // First try to verify as new AuthUser token
     console.log('[VERIFY API] Attempting to verify as AuthUser token');
-    let user = verifyToken(token);
+    let user = await verifyToken(token);
 
     // If that fails, try legacy admin token for backward compatibility
     if (!user) {
       console.log('[VERIFY API] AuthUser token failed, trying legacy admin token');
-      const adminUser = verifyAdminToken(token);
+      const adminUser = await verifyAdminToken(token);
       if (adminUser) {
         console.log('[VERIFY API] Legacy admin token verified');
         user = {
@@ -48,16 +53,28 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('[VERIFY API] Token verification successful, returning user data');
+    // Ensure user object is serializable (should already be plain from JWT decode)
+    const serializableUser = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      permissions: user.permissions,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+
+    // Test serialization to catch DataCloneError early
+    try {
+      JSON.stringify(serializableUser);
+      console.log('[VERIFY API] User object serialization test passed');
+    } catch (error) {
+      console.error('[VERIFY API] User object serialization test failed:', error);
+      throw error;
+    }
+
     return NextResponse.json({
       message: "Token valid",
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        permissions: user.permissions,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      }
+      user: serializableUser
     });
 
   } catch (error) {

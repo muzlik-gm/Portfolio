@@ -14,12 +14,14 @@ export default function AdminSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
 
-  const fetchSettings = async (token: string) => {
+  const fetchSettings = async () => {
     try {
       const response = await fetch('/api/admin/settings', {
+        method: 'GET',
+        credentials: 'include', // Include cookies
         headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+          'Content-Type': 'application/json'
+        }
       });
 
       if (response.ok) {
@@ -34,19 +36,18 @@ export default function AdminSettingsPage() {
   const saveSettings = async (settingsToSave: any[]) => {
     setIsSaving(true);
     try {
-      const token = localStorage.getItem("adminToken");
       const response = await fetch('/api/admin/settings', {
         method: 'PUT',
+        credentials: 'include', // Include cookies
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ settings: settingsToSave }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        await fetchSettings(token!); // Refresh settings
+        await fetchSettings(); // Refresh settings
         return { success: true, data };
       } else {
         return { success: false, error: 'Failed to save settings' };
@@ -78,36 +79,37 @@ export default function AdminSettingsPage() {
     }
     console.log('[SETTINGS] Token found in localStorage');
 
-      // Verify token with server
-      try {
-        console.log('[SETTINGS] Verifying token with server');
-        const verifyResponse = await fetch('/api/admin/verify', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!verifyResponse.ok) {
-          console.log('[SETTINGS] Server token verification failed, redirecting to login');
-          localStorage.removeItem("adminToken");
-          router.push("/admin/login");
-          return;
+    // Verify token with server
+    try {
+      console.log('[SETTINGS] Verifying token with server');
+      const verifyResponse = await fetch('/api/admin/verify', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
+      });
 
-        const verifyData = await verifyResponse.json();
-        console.log('[SETTINGS] Server token verification successful for user:', verifyData.user.email);
-        setIsAuthenticated(true);
-
-        // Fetch settings after authentication
-        fetchSettings(token);
-      } catch (error) {
-        console.error('[SETTINGS] Token verification error:', error);
+      console.log('[SETTINGS] Verify response status:', verifyResponse.status);
+      if (!verifyResponse.ok) {
+        console.log('[SETTINGS] Server token verification failed, redirecting to login');
         localStorage.removeItem("adminToken");
         router.push("/admin/login");
-      } finally {
-        setIsLoading(false);
+        return;
       }
+
+      const verifyData = await verifyResponse.json();
+      console.log('[SETTINGS] Server verification successful for user:', verifyData.user?.email);
+      setIsAuthenticated(true);
+
+      // Fetch settings after authentication
+      fetchSettings();
+    } catch (error) {
+      console.error('[SETTINGS] Token verification error:', error);
+      localStorage.removeItem("adminToken");
+      router.push("/admin/login");
+    } finally {
+      setIsLoading(false);
+    }
     };
 
     verifyAuthentication();
@@ -121,8 +123,16 @@ export default function AdminSettingsPage() {
     };
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear server-side cookie
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('[SETTINGS] Logout API error:', error);
+    }
     router.push("/admin/login");
   };
 

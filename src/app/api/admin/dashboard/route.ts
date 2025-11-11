@@ -1,39 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbConnect, User, Content, Analytics, Settings } from '@/lib/models';
-import { verifyAdminToken } from '@/lib/auth';
-import { getCachedData } from '@/lib/cache';
+import { verifyAdminToken, getTokenFromRequest, getAuthCookie } from '@/lib/auth';
+import { getCachedData, cache } from '@/lib/cache';
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('[DASHBOARD API] Dashboard data request received');
+    console.log('[DASHBOARD API] Request headers:', Object.fromEntries(request.headers.entries()));
+
     // Verify admin authentication
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token = getTokenFromRequest(request);
+
+    // If no token in header, try to get from cookie
+    if (!token) {
+      token = getAuthCookie(request);
+    }
+
+    if (!token) {
+      console.log('[DASHBOARD API] No token provided in request');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const token = authHeader.substring(7);
     const adminUser = await verifyAdminToken(token);
     if (!adminUser) {
+      console.log('[DASHBOARD API] Admin token verification failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.log('[DASHBOARD API] Admin token verified for user:', adminUser);
+    console.log('[DASHBOARD API] Admin user object:', JSON.stringify(adminUser, null, 2));
 
+    console.log('[DASHBOARD API] Connecting to database');
     await dbConnect();
+    console.log('[DASHBOARD API] Database connected successfully');
+
+    console.log('[DASHBOARD API] Starting dashboard data aggregation with caching');
+
+    // Check Redis connection status for graceful fallback
+    const cacheStats = await cache.getStats();
+    const redisUnavailable = !cacheStats.connected;
+    console.log(`[DASHBOARD API] Redis availability: ${!redisUnavailable}`);
 
     // Cache key for dashboard data
     const cacheKey = `dashboard:admin`;
 
-    // Get total users count with caching (10 minutes TTL)
+    // Get total users count with caching (10 minutes TTL) - critical data, skip cache if Redis fails
     const totalUsers = await getCachedData(
       `${cacheKey}:totalUsers`,
       () => User.countDocuments({ isActive: true }),
-      { ttl: 600 }
+      { ttl: 600, skipCache: redisUnavailable }
     );
 
-    // Get content statistics by type with caching (5 minutes TTL)
+    // Get content statistics by type with caching (5 minutes TTL) - critical data, skip cache if Redis fails
     const totalContent = await getCachedData(
       `${cacheKey}:totalContent`,
       () => Content.countDocuments(),
-      { ttl: 300 }
+      { ttl: 300, skipCache: redisUnavailable }
     );
 
     const blogStats = await getCachedData(
@@ -53,7 +74,7 @@ export async function GET(request: NextRequest) {
           }
         }
       ]),
-      { ttl: 300 }
+      { ttl: 300, skipCache: redisUnavailable }
     );
 
     const projectStats = await getCachedData(
@@ -73,10 +94,10 @@ export async function GET(request: NextRequest) {
           }
         }
       ]),
-      { ttl: 300 }
+      { ttl: 300, skipCache: redisUnavailable }
     );
 
-    // Get recent activities from Analytics and Content with caching (2 minutes TTL)
+    // Get recent activities from Analytics and Content with caching (2 minutes TTL) - critical data, skip cache if Redis fails
     const recentActivities = await getCachedData(
       `${cacheKey}:recentActivities`,
       () => Promise.all([
@@ -97,17 +118,17 @@ export async function GET(request: NextRequest) {
           .select('eventType eventData url timestamp')
           .lean()
       ]),
-      { ttl: 120 }
+      { ttl: 120, skipCache: redisUnavailable }
     );
 
-    // Get system status from settings with caching (15 minutes TTL)
+    // Get system status from settings with caching (15 minutes TTL) - less critical, can use cache normally
     const systemSettings = await getCachedData(
       `${cacheKey}:systemSettings`,
       () => Settings.find({
         category: 'system',
         isPublic: false
       }).select('key value description').lean(),
-      { ttl: 900 }
+      { ttl: 900, skipCache: redisUnavailable }
     );
 
     // Format recent activities
@@ -219,6 +240,8 @@ export async function GET(request: NextRequest) {
       }, {} as Record<string, any>)
     };
 
+    console.log('[DASHBOARD API] Prepared response data successfully');
+    console.log(`[DASHBOARD API] Dashboard API completed ${redisUnavailable ? 'without' : 'with'} Redis caching`);
     return NextResponse.json(responseData);
 
   } catch (error) {

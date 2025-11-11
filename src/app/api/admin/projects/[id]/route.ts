@@ -109,7 +109,7 @@ export async function PUT(
       );
     }
 
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
 
     if (!user || !hasPermission(user, 'write')) {
       return NextResponse.json(
@@ -294,7 +294,7 @@ export async function DELETE(
       );
     }
 
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
 
     if (!user || !hasPermission(user, 'delete')) {
       return NextResponse.json(

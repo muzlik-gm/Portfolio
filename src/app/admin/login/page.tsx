@@ -36,16 +36,11 @@ export default function AdminLoginPage() {
       console.log('[LOGIN PAGE] Login response:', response.status, data);
 
       if (response.ok) {
-        console.log('[LOGIN PAGE] Login successful, storing token');
+        console.log('[LOGIN PAGE] Login successful, cookie set by server');
         console.log('[LOGIN PAGE] Response data structure:', JSON.stringify(data, null, 2));
-        // Store the token in localStorage
-        localStorage.setItem("adminToken", data.data.token);
-        console.log('[LOGIN PAGE] Token stored in localStorage:', localStorage.getItem("adminToken") ? 'YES' : 'NO');
         console.log('[LOGIN PAGE] Redirecting to dashboard');
-        // Add a small delay to ensure token is persisted
-        setTimeout(() => {
-          router.push("/admin/dashboard");
-        }, 100);
+        // Token is now stored in httpOnly cookie by the server
+        router.push("/admin/dashboard");
       } else {
         console.log('[LOGIN PAGE] Login failed with message:', data.message);
         setError(data.message || "Invalid credentials");

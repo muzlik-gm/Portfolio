@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
 
     if (!user || !hasPermission(user, 'manage_settings')) {
       return NextResponse.json(
@@ -89,7 +89,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
 
     if (!user || !hasPermission(user, 'manage_settings')) {
       return NextResponse.json(

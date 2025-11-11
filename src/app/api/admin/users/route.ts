@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       throw new AuthenticationError();
     }
 
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
     if (!user || !hasPermission(user, 'manage_users')) {
       throw new AuthorizationError();
     }
@@ -51,10 +51,15 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(total / paginationData.limit);
 
+    // Convert Mongoose documents to plain objects to avoid DataCloneError
+    console.log('[USERS API] Converting user documents to plain objects');
+    const plainUsers = users.map(u => u.toObject ? u.toObject() : u);
+    console.log('[USERS API] Successfully converted', plainUsers.length, 'users to plain objects');
+
     return NextResponse.json({
       success: true,
       data: {
-        users: users.map(u => u.toObject()),
+        users: plainUsers,
         pagination: {
           page: paginationData.page,
           limit: paginationData.limit,
@@ -85,7 +90,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const requester = verifyToken(token);
+    const requester = await verifyToken(token);
 
     if (!requester || !hasPermission(requester, 'manage_users')) {
       return NextResponse.json(

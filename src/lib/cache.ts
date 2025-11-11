@@ -5,13 +5,61 @@ const client = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379',
 });
 
+// Redis availability flag
+let redisAvailable = true;
+let connectionAttempts = 0;
+const MAX_CONNECTION_ATTEMPTS = 3;
+const CONNECTION_TIMEOUT = 5000; // 5 seconds
+const OPERATION_TIMEOUT = 2000; // 2 seconds for individual operations
+
+const connectToRedis = async () => {
+  try {
+    connectionAttempts++;
+
+    // Set a timeout for the connection attempt
+    const connectPromise = client.connect();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Redis connection timeout')), CONNECTION_TIMEOUT)
+    );
+
+    await Promise.race([connectPromise, timeoutPromise]);
+    redisAvailable = true;
+    connectionAttempts = 0; // Reset on success
+  } catch (error) {
+    redisAvailable = false;
+
+    if (connectionAttempts < MAX_CONNECTION_ATTEMPTS) {
+      setTimeout(connectToRedis, 1000);
+    } else {
+      redisAvailable = false;
+    }
+  }
+};
+
 // Connect to Redis
-client.on('error', (err) => console.log('Redis Client Error', err));
-client.connect();
+client.on('error', () => {
+  redisAvailable = false;
+});
+
+client.on('ready', () => {
+  redisAvailable = true;
+});
+
+client.on('end', () => {
+  redisAvailable = false;
+});
+
+client.on('reconnecting', () => {
+  // Silent
+});
+
+// Initial connection
+connectToRedis();
 
 export interface CacheOptions {
   ttl?: number; // Time to live in seconds
   compress?: boolean;
+  skipCache?: boolean; // Skip caching entirely if Redis is unavailable
 }
 
 export class CacheService {
@@ -27,83 +75,128 @@ export class CacheService {
   }
 
   async get(key: string): Promise<string | null> {
+    if (!redisAvailable) {
+      return null;
+    }
     try {
-      return await client.get(key);
+      const getPromise = client.get(key);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Redis get timeout')), OPERATION_TIMEOUT)
+      );
+      const result = await Promise.race([getPromise, timeoutPromise]);
+      return result;
     } catch (error) {
-      console.error('Cache get error:', error);
+      redisAvailable = false;
       return null;
     }
   }
 
   async set(key: string, value: string, options: CacheOptions = {}): Promise<void> {
+    if (!redisAvailable) {
+      return;
+    }
     try {
       const { ttl, compress } = options;
 
       // Compress value if enabled (simple JSON compression for now)
       const finalValue = compress ? this.compress(value) : value;
 
+      let setPromise;
       if (ttl) {
-        await client.setEx(key, ttl, finalValue);
+        setPromise = client.setEx(key, ttl, finalValue);
       } else {
-        await client.set(key, finalValue);
+        setPromise = client.set(key, finalValue);
       }
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Redis set timeout')), OPERATION_TIMEOUT)
+      );
+
+      await Promise.race([setPromise, timeoutPromise]);
     } catch (error) {
-      console.error('Cache set error:', error);
+      redisAvailable = false;
     }
   }
 
   async del(key: string): Promise<void> {
+    if (!redisAvailable) {
+      return;
+    }
     try {
       await client.del(key);
     } catch (error) {
-      console.error('Cache del error:', error);
+      redisAvailable = false;
     }
   }
 
   async exists(key: string): Promise<boolean> {
+    if (!redisAvailable) {
+      return false;
+    }
     try {
-      const result = await client.exists(key);
+      const existsPromise = client.exists(key);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Redis exists timeout')), OPERATION_TIMEOUT)
+      );
+      const result = await Promise.race([existsPromise, timeoutPromise]);
       return result === 1;
     } catch (error) {
-      console.error('Cache exists error:', error);
+      redisAvailable = false;
       return false;
     }
   }
 
   // Invalidate cache by pattern (simple implementation)
   async invalidate(pattern: string): Promise<void> {
+    if (!redisAvailable) {
+      return;
+    }
     try {
-      const keys = await client.keys(pattern);
+      const keysPromise = client.keys(pattern);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Redis keys timeout')), OPERATION_TIMEOUT)
+      );
+      const keys = await Promise.race([keysPromise, timeoutPromise]);
       if (keys.length > 0) {
         await client.del(keys);
       }
     } catch (error) {
-      console.error('Cache invalidate error:', error);
+      redisAvailable = false;
     }
   }
 
   // Cache warming utility
   async warmCache(key: string, fetcher: () => Promise<any>, options: CacheOptions = {}): Promise<void> {
+    if (!redisAvailable) {
+      return;
+    }
     try {
       const data = await fetcher();
       const value = JSON.stringify(data);
       await this.set(key, value, options);
     } catch (error) {
-      console.error('Cache warm error:', error);
+      redisAvailable = false;
     }
   }
 
   // Get cache stats
   async getStats(): Promise<any> {
+    if (!redisAvailable) {
+      return { available: false };
+    }
     try {
-      const info = await client.info();
+      const infoPromise = client.info();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Redis info timeout')), OPERATION_TIMEOUT)
+      );
+      const info = await Promise.race([infoPromise, timeoutPromise]);
       return {
-        connected: client.isOpen,
+        available: true,
         info: info,
       };
     } catch (error) {
-      console.error('Cache stats error:', error);
-      return { connected: false, error: (error as Error).message };
+      redisAvailable = false;
+      return { available: false, error: (error as Error).message };
     }
   }
 
@@ -127,16 +220,27 @@ export const getCachedData = async <T>(
   fetcher: () => Promise<T>,
   options: CacheOptions = {}
 ): Promise<T> => {
-  const cached = await cache.get(key);
-  if (cached) {
-    const data = options.compress ? cache['decompress'](cached) : cached;
-    return JSON.parse(data);
-  }
+  try {
+    // If skipCache is enabled or Redis is not available, skip caching entirely
+    if (options.skipCache || !redisAvailable) {
+      return await fetcher();
+    }
 
-  const data = await fetcher();
-  const value = JSON.stringify(data);
-  await cache.set(key, value, options);
-  return data;
+    const cached = await cache.get(key);
+    if (cached) {
+      const data = options.compress ? cache['decompress'](cached) : cached;
+      return JSON.parse(data);
+    }
+
+    const data = await fetcher();
+    const value = JSON.stringify(data);
+    await cache.set(key, value, options);
+    return data;
+  } catch (error) {
+    // If caching fails, disable Redis and fetch directly
+    redisAvailable = false;
+    return await fetcher();
+  }
 };
 
 export const invalidateCache = async (pattern: string): Promise<void> => {

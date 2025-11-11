@@ -62,34 +62,49 @@ export async function POST(request: NextRequest) {
      }, 'Failed to update last login');
      console.log('[LOGIN API] Last login updated');
 
+     // Convert Mongoose document to plain object to avoid DataCloneError
+     console.log('[LOGIN API] Converting user document to plain object');
+     const userObject = user.toObject ? user.toObject() : user;
+     console.log('[LOGIN API] User object type after conversion:', typeof userObject, 'has _id:', !!userObject._id);
+
      // Generate JWT token
      console.log('[LOGIN API] Generating JWT token');
-     const token = generateToken({
-       id: user._id.toString(),
-       email: user.email,
-       role: user.role,
-       permissions: user.permissions,
-       firstName: user.firstName,
-       lastName: user.lastName,
+     const token = await generateToken({
+       id: userObject._id.toString(),
+       email: userObject.email,
+       role: String(userObject.role), // Ensure role is a plain string
+       permissions: Array.isArray(userObject.permissions) ? userObject.permissions : [], // Ensure permissions is a plain array
+       firstName: userObject.firstName,
+       lastName: userObject.lastName,
      });
      console.log('[LOGIN API] Token generated successfully');
 
-     console.log('[LOGIN API] Login successful, returning response');
-     return NextResponse.json({
+     console.log('[LOGIN API] Login successful, setting cookie and returning response');
+     const response = NextResponse.json({
        success: true,
        data: {
          message: "Login successful",
-         token,
          user: {
-           id: user._id,
-           email: user.email,
-           role: user.role,
-           permissions: user.permissions,
-           firstName: user.firstName,
-           lastName: user.lastName,
+           id: userObject._id,
+           email: userObject.email,
+           role: userObject.role,
+           permissions: userObject.permissions,
+           firstName: userObject.firstName,
+           lastName: userObject.lastName,
          }
        }
      });
+
+     // Set the token as an httpOnly cookie
+     response.cookies.set('adminToken', token, {
+       httpOnly: true,
+       secure: process.env.NODE_ENV === 'production',
+       sameSite: 'strict',
+       maxAge: 60 * 60 * 24, // 24 hours
+       path: '/'
+     });
+
+     return response;
 
    } catch (error) {
      console.error("Login error:", error);

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
 
     if (!user) {
       return NextResponse.json(
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = verifyToken(token);
+    const user = await verifyToken(token);
 
     if (!user || !hasPermission(user, 'write')) {
       return NextResponse.json(

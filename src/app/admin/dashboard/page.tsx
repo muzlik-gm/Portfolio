@@ -56,50 +56,51 @@ export default function AdminDashboardPage() {
       document.documentElement.style.background = '#fafaf9';
       document.documentElement.style.backgroundImage = 'none';
 
-      console.log('[DASHBOARD] Checking authentication');
-      // Check authentication
-      const token = localStorage.getItem("adminToken");
-      if (!token) {
-        console.log('[DASHBOARD] No token found in localStorage, redirecting to login');
-        router.push("/admin/login");
-        return;
-      }
-      console.log('[DASHBOARD] Token found in localStorage');
+      console.log('[DASHBOARD] Starting authentication check');
+      // Since we now use httpOnly cookies, we need to verify with server
+      // The middleware already checked the cookie, so we just need to confirm we're authenticated
 
-      // Verify token with server
       try {
-        console.log('[DASHBOARD] Verifying token with server');
+        console.log('[DASHBOARD] Verifying authentication with server');
         const verifyResponse = await fetch('/api/admin/verify', {
+          method: 'GET',
+          credentials: 'include', // Include cookies
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
 
+        console.log('[DASHBOARD] Verify response status:', verifyResponse.status);
         if (!verifyResponse.ok) {
-          console.log('[DASHBOARD] Server token verification failed, redirecting to login');
-          localStorage.removeItem("adminToken");
+          console.log('[DASHBOARD] Server verification failed, redirecting to login');
           router.push("/admin/login");
           return;
         }
 
         const verifyData = await verifyResponse.json();
-        console.log('[DASHBOARD] Server token verification successful for user:', verifyData.user.email);
+        console.log('[DASHBOARD] Server verification successful for user:', verifyData.user?.email);
         setIsAuthenticated(true);
 
-        // Fetch dashboard data from API
+        // Fetch dashboard data from API (using cookies now)
+        console.log('[DASHBOARD] Fetching dashboard data from API');
         const response = await fetch('/api/admin/dashboard', {
+          method: 'GET',
+          credentials: 'include', // Include cookies
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
 
+        console.log('[DASHBOARD] Dashboard API response status:', response.status);
+        console.log('[DASHBOARD] Dashboard API response headers:', Object.fromEntries(response.headers.entries()));
+
         if (response.ok) {
           const data = await response.json();
+          console.log('[DASHBOARD] Dashboard data received:', data);
           setDashboardData(data);
         } else {
-          console.error('Failed to fetch dashboard data');
+          const errorText = await response.text();
+          console.error('[DASHBOARD] Failed to fetch dashboard data - Status:', response.status, 'Response:', errorText);
           // Set default empty data on error
           setDashboardData({
             totalUsers: 0,
@@ -147,8 +148,16 @@ export default function AdminDashboardPage() {
     };
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("adminToken");
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear server-side cookie
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('[DASHBOARD] Logout API error:', error);
+    }
     router.push("/admin/login");
   };
 

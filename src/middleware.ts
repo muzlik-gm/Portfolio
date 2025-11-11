@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { rateLimitMiddleware, sanitizationMiddleware } from '@/lib/middleware';
 import { verifyToken } from '@/lib/auth';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // Apply rate limiting
   const rateLimitResponse = rateLimitMiddleware(request);
   if (rateLimitResponse.status === 429) {
@@ -22,30 +22,36 @@ export function middleware(request: NextRequest) {
 
      console.log('[MIDDLEWARE] Admin route accessed:', request.nextUrl.pathname);
 
-     // Verify JWT token server-side
-     const token = request.headers.get('authorization')?.replace('Bearer ', '');
+     // Check for token in httpOnly cookie
+     const token = request.cookies.get('adminToken')?.value;
+     console.log('[MIDDLEWARE] Token cookie present:', !!token);
      if (!token) {
-       console.log('[MIDDLEWARE] No token provided, redirecting to login');
+       console.log('[MIDDLEWARE] No token cookie found, redirecting to login');
        return NextResponse.redirect(new URL('/admin/login', request.url));
      }
 
      try {
-       const user = verifyToken(token);
+        console.log('[MIDDLEWARE] Attempting to verify token:', token.substring(0, 10) + '...');
+       const user = await verifyToken(token);
        if (!user) {
-         console.log('[MIDDLEWARE] Invalid token, redirecting to login');
-         return NextResponse.redirect(new URL('/admin/login', request.url));
+         console.log('[MIDDLEWARE] Invalid token in cookie, redirecting to login');
+         const response = NextResponse.redirect(new URL('/admin/login', request.url));
+         response.cookies.delete('adminToken');
+         return response;
        }
 
-       console.log('[MIDDLEWARE] Token valid for user:', user.email);
+       console.log('[MIDDLEWARE] Token valid for user:', user.email, 'role:', user.role);
        return NextResponse.next();
      } catch (error) {
        console.error('[MIDDLEWARE] Token verification error:', error);
-       return NextResponse.redirect(new URL('/admin/login', request.url));
+       const response = NextResponse.redirect(new URL('/admin/login', request.url));
+       response.cookies.delete('adminToken');
+       return response;
      }
    }
 
-  return NextResponse.next();
-}
+   return NextResponse.next();
+ }
 
 export const config = {
   matcher: [

@@ -16,7 +16,7 @@ export async function GET(
       );
     }
 
-    const requester = verifyToken(token);
+    const requester = await verifyToken(token);
 
     if (!requester || !hasPermission(requester, 'manage_users')) {
       return NextResponse.json(
@@ -65,7 +65,7 @@ export async function PUT(
       );
     }
 
-    const requester = verifyToken(token);
+    const requester = await verifyToken(token);
 
     if (!requester || !hasPermission(requester, 'manage_users')) {
       return NextResponse.json(
@@ -127,7 +127,7 @@ export async function DELETE(
       );
     }
 
-    const requester = verifyToken(token);
+    const requester = await verifyToken(token);
 
     if (!requester || !hasPermission(requester, 'manage_users')) {
       return NextResponse.json(

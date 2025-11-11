@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
   },
+  serverExternalPackages: ['bcryptjs'],
   async headers() {
     return [
       {
