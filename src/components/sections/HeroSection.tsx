@@ -3,10 +3,12 @@
 import { motion } from "framer-motion";
 import { Section, Typography, Button } from "@/components/ui";
 import { ParallaxBackground, FloatingParticles, BreathingGlow } from "@/components/effects";
-import { createWordRevealVariants, staggerContainer } from "@/lib/animations";
+import { createWordRevealVariants, staggerContainer, createWordRevealAnimation } from "@/lib/animations";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useTypingEffect } from "@/hooks/useTypingEffect";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Atom, FileCode2, Server } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 export function HeroSection() {
   const prefersReducedMotion = useReducedMotion();
@@ -17,15 +19,49 @@ export function HeroSection() {
 
   const { displayText: typedDescription, isComplete: typingComplete } = useTypingEffect(description, 50);
 
+  // Refs for Anime.js animations
+  const taglineRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<HTMLDivElement>(null);
+
+  // Intersection observer for trigger animations
+  const { ref: heroRef, isIntersecting } = useIntersectionObserver({
+    threshold: 0.3,
+    triggerOnce: true
+  });
+
+  // Apply word-by-word reveal animations
+  useEffect(() => {
+    if (!prefersReducedMotion && isIntersecting) {
+      if (nameRef.current) {
+        const letters = nameRef.current.querySelectorAll('.hero-letter');
+        createWordRevealAnimation(letters, {
+          stagger: 80,
+          rotationalBias: true,
+          delay: 200
+        });
+      }
+
+      if (taglineRef.current) {
+        const words = taglineRef.current.querySelectorAll('.tagline-word');
+        createWordRevealAnimation(words, {
+          stagger: 120,
+          rotationalBias: true,
+          delay: 800
+        });
+      }
+    }
+  }, [isIntersecting, prefersReducedMotion]);
+
   const nameWords = name.split("");
   const taglineWords = tagline.split(" ");
 
   return (
-    <Section 
-      id="home" 
-      className="hero-section hero-grid relative overflow-hidden flex items-center justify-center pt-20 md:pt-24"
-      fullHeight={true}
-    >
+    <div ref={heroRef as any}>
+      <Section
+        id="home"
+        className="hero-section hero-grid relative overflow-hidden flex items-center justify-center pt-20 md:pt-24"
+        fullHeight={true}
+      >
       {/* Stable Background */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Static Background Layer */}
@@ -73,48 +109,45 @@ export function HeroSection() {
       <div className="relative z-10 text-center space-y-8 max-w-4xl mx-auto px-6 hero-content mt-8 md:mt-12">
         {/* Animated Name */}
         <BreathingGlow intensity="medium" className="inline-block">
-          <motion.div
+          <div
+            ref={nameRef}
             className="typography-hero font-bold text-foreground"
-            variants={prefersReducedMotion ? undefined : staggerContainer}
-            initial={prefersReducedMotion ? undefined : "hidden"}
-            animate={prefersReducedMotion ? undefined : "visible"}
+            data-scroll-reveal="words"
           >
-            {nameWords.map((letter, index) => (
-              <motion.span
+            {name.split('').map((letter, index) => (
+              <span
                 key={index}
-                variants={prefersReducedMotion ? undefined : createWordRevealVariants(0.2)}
-                custom={index}
-                className="inline-block"
-                whileHover={prefersReducedMotion ? undefined : {
-                  scale: 1.1,
-                  color: "var(--color-accent)",
-                  transition: { duration: 0.2 }
+                className="hero-letter inline-block"
+                style={{
+                  opacity: prefersReducedMotion ? 1 : 0,
+                  transform: prefersReducedMotion ? 'none' : 'translateY(30px) scale(0.9) rotateX(10deg)'
                 }}
               >
                 {letter}
-              </motion.span>
+              </span>
             ))}
-          </motion.div>
+          </div>
         </BreathingGlow>
 
         {/* Animated Tagline */}
-        <motion.div
+        <div
+          ref={taglineRef}
           className="typography-heading text-accent/90 font-medium"
-          variants={prefersReducedMotion ? undefined : staggerContainer}
-          initial={prefersReducedMotion ? undefined : "hidden"}
-          animate={prefersReducedMotion ? undefined : "visible"}
+          data-scroll-reveal="words"
         >
           {taglineWords.map((word, index) => (
-            <motion.span
+            <span
               key={index}
-              variants={prefersReducedMotion ? undefined : createWordRevealVariants(1)}
-              custom={index}
-              className="inline-block mr-3 text-reveal"
+              className="tagline-word inline-block mr-3"
+              style={{
+                opacity: prefersReducedMotion ? 1 : 0,
+                transform: prefersReducedMotion ? 'none' : 'translateY(30px) scale(0.9) rotateX(10deg)'
+              }}
             >
               {word}
-            </motion.span>
+            </span>
           ))}
-        </motion.div>
+        </div>
 
         {/* Subtitle */}
         <motion.div
@@ -258,5 +291,6 @@ export function HeroSection() {
         />
       </div>
     </Section>
+    </div>
   );
 }

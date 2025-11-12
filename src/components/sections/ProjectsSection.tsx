@@ -1,15 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Section, Typography, Button, Card, TechStack } from "@/components/ui";
 import { ProjectImage } from "@/components/ui/ProjectImage";
 import { projects, Project } from "@/data/projects";
-import { staggerContainer, scrollReveal } from "@/lib/animations";
+import { staggerContainer, scrollReveal, createCardRevealAnimation } from "@/lib/animations";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 export function ProjectsSection() {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'web' | 'game'>('all');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  const prefersReducedMotion = useReducedMotion();
+  const projectsRef = useRef<HTMLDivElement>(null);
+
+  // Intersection observer for card animations
+  const { ref: sectionRef, isIntersecting } = useIntersectionObserver({
+    threshold: 0.2,
+    triggerOnce: true
+  });
+
+  // Apply card reveal animations
+  useEffect(() => {
+    if (!prefersReducedMotion && isIntersecting && projectsRef.current) {
+      const cards = projectsRef.current.querySelectorAll('.project-card');
+      createCardRevealAnimation(cards, {
+        stagger: 120,
+        delay: 200
+      });
+    }
+  }, [isIntersecting, prefersReducedMotion]);
 
   const categories = [
     { id: 'all', label: 'All Projects' },
@@ -22,11 +44,12 @@ export function ProjectsSection() {
     : projects.filter(project => project.category === selectedCategory);
 
   return (
-    <Section 
-      id="projects" 
-      className="projects-section fade-in-section grid-pattern"
-      background="surface"
-    >
+    <div ref={sectionRef as any}>
+      <Section
+        id="projects"
+        className="projects-section fade-in-section grid-pattern"
+        background="surface"
+      >
       <div className="space-y-16">
         {/* Section Header */}
         <div className="text-center space-y-6">
@@ -83,12 +106,10 @@ export function ProjectsSection() {
         </motion.div>
 
         {/* Projects Grid */}
-        <motion.div
+        <div
+          ref={projectsRef}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
+          data-scroll-reveal="cards"
         >
           <AnimatePresence>
             {filteredProjects.map((project, index) => (
@@ -100,7 +121,7 @@ export function ProjectsSection() {
               />
             ))}
           </AnimatePresence>
-        </motion.div>
+        </div>
 
         {/* Project Detail Modal */}
         <AnimatePresence>
@@ -113,6 +134,7 @@ export function ProjectsSection() {
         </AnimatePresence>
       </div>
     </Section>
+    </div>
   );
 }
 

@@ -4,10 +4,34 @@ import { motion } from "framer-motion";
 import { Section, Typography, ProfileImage, TechStack } from "@/components/ui";
 import { ParallaxBackground } from "@/components/effects";
 import { personalInfo, timeline, skills, achievements, getSkillsByCategory } from "@/data/about";
-import { scrollReveal, staggerContainer } from "@/lib/animations";
+import { scrollReveal, staggerContainer, createSweepingTextAnimation } from "@/lib/animations";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { FileCode, Layers, Database } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 export function AboutSection() {
+  const prefersReducedMotion = useReducedMotion();
+  const aboutRef = useRef<HTMLDivElement>(null);
+  const bioRef = useRef<HTMLParagraphElement>(null);
+
+  // Intersection observer for text animations
+  const { ref: sectionRef, isIntersecting } = useIntersectionObserver({
+    threshold: 0.3,
+    triggerOnce: true
+  });
+
+  // Apply sweeping text animation
+  useEffect(() => {
+    if (!prefersReducedMotion && isIntersecting && bioRef.current) {
+      createSweepingTextAnimation(bioRef.current, {
+        direction: 'left',
+        stagger: 30,
+        delay: 300
+      });
+    }
+  }, [isIntersecting, prefersReducedMotion]);
+
   const skillCategories = [
     { id: 'frontend', label: 'Frontend', color: 'from-primary to-secondary' },
     { id: 'backend', label: 'Backend', color: 'from-accent to-neutral' },
@@ -16,10 +40,11 @@ export function AboutSection() {
   ];
 
   return (
-    <Section 
-      id="about" 
-      className="about-section fade-in-section grid-pattern-dots relative overflow-hidden"
-    >
+    <div ref={sectionRef as any}>
+      <Section
+        id="about"
+        className="about-section fade-in-section grid-pattern-dots relative overflow-hidden"
+      >
       {/* Multi-layer Background Pattern */}
       <div className="absolute inset-0 overflow-hidden opacity-30">
         <ParallaxBackground speed="slow" className="absolute inset-0 parallax-bg">
@@ -104,9 +129,15 @@ export function AboutSection() {
             transition={{ delay: 0.2 }}
             className="max-w-4xl mx-auto"
           >
-            <Typography variant="body" className="text-foreground/80 text-lg leading-relaxed">
-              {personalInfo.bio}
-            </Typography>
+            <div
+              ref={bioRef}
+              data-scroll-reveal="sweep"
+              data-sweep-direction="left"
+            >
+              <Typography variant="body" className="text-foreground/80 text-lg leading-relaxed">
+                {personalInfo.bio}
+              </Typography>
+            </div>
           </motion.div>
         </div>
 
@@ -294,5 +325,6 @@ export function AboutSection() {
         </motion.div>
       </div>
     </Section>
+    </div>
   );
 }

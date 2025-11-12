@@ -4,10 +4,148 @@ import { motion } from "framer-motion";
 import { Section, Typography, Button } from "@/components/ui";
 import { ContactForm } from "@/components/forms";
 import { ParallaxBackground, BreathingGlow } from "@/components/effects";
-import { scrollReveal, staggerContainer } from "@/lib/animations";
+import { scrollReveal, staggerContainer, createImageRevealAnimation } from "@/lib/animations";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { MapPin, Clock, Briefcase, Mail, Github, Linkedin, Twitter, MessageCircle, Rocket } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { animate, createTimeline } from "animejs";
 
 export function ContactSection() {
+  const prefersReducedMotion = useReducedMotion();
+  const contactRef = useRef<HTMLDivElement>(null);
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+
+  // Intersection observer for image animations
+  const { ref: sectionRef, isIntersecting } = useIntersectionObserver({
+    threshold: 0.3,
+    triggerOnce: true
+  });
+
+  // Apply image reveal animations and link accent animations
+  useEffect(() => {
+    if (!prefersReducedMotion && isIntersecting && contactRef.current) {
+      const images = contactRef.current.querySelectorAll('[data-scroll-reveal="image"]');
+      images.forEach((image, index) => {
+        createImageRevealAnimation(image as HTMLElement, {
+          delay: 500 + index * 200,
+          glowColor: 'rgba(221, 215, 141, 0.4)'
+        });
+      });
+    }
+  }, [isIntersecting, prefersReducedMotion]);
+
+  // Link accent line and pulsing dot animations
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+
+    const links = linkRefs.current.filter(Boolean);
+    if (!links.length) return;
+
+    const handleLinkMouseEnter = (element: HTMLElement, index: number) => {
+      // Create accent line and pulsing dot
+      const line = document.createElement('div');
+      const dot = document.createElement('div');
+
+      // Style the accent line
+      line.style.cssText = `
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        width: 0%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), var(--primary));
+        transform: translateX(-50%);
+        border-radius: 1px;
+        z-index: 1;
+      `;
+
+      // Style the pulsing dot
+      dot.style.cssText = `
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        width: 6px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        z-index: 2;
+      `;
+
+      element.style.position = 'relative';
+      element.appendChild(line);
+      element.appendChild(dot);
+
+      // Animate accent line from center outward
+      animate(line, {
+        width: '100%',
+        duration: 400,
+        easing: 'cubicBezier(0.25, 0.46, 0.45, 0.94)'
+      });
+
+      // Animate pulsing dot
+      createTimeline()
+        .add(dot, {
+          opacity: [0, 1],
+          scale: [0.5, 1],
+          duration: 300,
+          easing: 'easeOutExpo'
+        })
+        .add(dot, {
+          scale: [1, 1.2, 1],
+          opacity: [1, 0.8, 0],
+          duration: 800,
+          easing: 'easeInOutQuad',
+          loop: true
+        });
+    };
+
+    const handleLinkMouseLeave = (element: HTMLElement) => {
+      const line = element.querySelector('div[style*="bottom: -2px"]') as HTMLElement;
+      const dot = element.querySelector('div[style*="border-radius: 50%"]') as HTMLElement;
+
+      if (line) {
+        animate(line, {
+          width: '0%',
+          duration: 400,
+          easing: 'cubicBezier(0.25, 0.46, 0.45, 0.94)',
+          complete: () => {
+            line.remove();
+          }
+        });
+      }
+
+      if (dot) {
+        animate(dot, {
+          opacity: 0,
+          scale: 0.5,
+          duration: 300,
+          easing: 'easeInOutQuad',
+          complete: () => {
+            dot.remove();
+          }
+        });
+      }
+    };
+
+    links.forEach((link, index) => {
+      if (!link) return;
+
+      link.addEventListener('mouseenter', () => handleLinkMouseEnter(link, index));
+      link.addEventListener('mouseleave', () => handleLinkMouseLeave(link));
+    });
+
+    return () => {
+      links.forEach((link) => {
+        if (!link) return;
+        link.removeEventListener('mouseenter', () => handleLinkMouseEnter(link, 0));
+        link.removeEventListener('mouseleave', () => handleLinkMouseLeave(link));
+      });
+    };
+  }, [prefersReducedMotion]);
+
   const socialLinks = [
     {
       name: "Email",
@@ -63,11 +201,12 @@ export function ContactSection() {
   ];
 
   return (
-    <Section 
-      id="contact" 
-      className="contact-section fade-in-section grid-pattern-subtle relative overflow-hidden"
-      background="surface"
-    >
+    <div ref={sectionRef as any}>
+      <Section
+        id="contact"
+        className="contact-section fade-in-section grid-pattern-subtle relative overflow-hidden"
+        background="surface"
+      >
       {/* Background Effects */}
       <ParallaxBackground speed="slow" className="absolute inset-0 opacity-40">
         {/* Layered waves background */}
@@ -180,6 +319,7 @@ export function ContactSection() {
 
           {/* Contact Info & Social Links */}
           <motion.div
+            ref={contactRef}
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
@@ -237,6 +377,11 @@ export function ContactSection() {
                   return (
                     <motion.a
                       key={link.name}
+                      ref={(el) => {
+                        if (el && linkRefs.current) {
+                          linkRefs.current[index] = el;
+                        }
+                      }}
                       href={link.href}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -299,5 +444,6 @@ export function ContactSection() {
         </motion.div>
       </div>
     </Section>
+    </div>
   );
 }

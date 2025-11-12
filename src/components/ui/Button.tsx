@@ -1,9 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ReactNode } from "react";
+import { ReactNode, useRef, useEffect } from "react";
 import { theme, motionVariants } from "@/lib/theme";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+// @ts-ignore - Anime.js has complex module structure
+import { animate } from "animejs";
 
 interface ButtonProps {
   children: ReactNode;
@@ -25,6 +27,9 @@ export function Button({
   disabled = false
 }: ButtonProps) {
   const prefersReducedMotion = useReducedMotion();
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+
   const baseClasses = "inline-flex items-center justify-center font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
   
   const variantClasses = {
@@ -40,12 +45,84 @@ export function Button({
   };
   
   const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
-  
+
   const MotionComponent = motion.button;
+
+  // Anime.js hover and press animations
+  useEffect(() => {
+    if (prefersReducedMotion || disabled) return;
+
+    const element = buttonRef.current || linkRef.current;
+    if (!element) return;
+
+    const handleMouseEnter = () => {
+      animate(element, {
+        scale: 0.95,
+        duration: 200,
+        easing: 'cubicBezier(0.25, 0.46, 0.45, 0.94)'
+      });
+    };
+
+    const handleMouseLeave = () => {
+      animate(element, {
+        scale: 1,
+        duration: 500,
+        easing: 'spring(1, 80, 10, 0)'
+      });
+    };
+
+    const handleMouseDown = (e: Event) => {
+      const mouseEvent = e as MouseEvent;
+      // Create ripple effect
+      const rect = element.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      const size = Math.max(rect.width, rect.height);
+      const x = mouseEvent.clientX - rect.left - size / 2;
+      const y = mouseEvent.clientY - rect.top - size / 2;
+
+      ripple.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        width: 0;
+        height: 0;
+        pointer-events: none;
+        z-index: 10;
+      `;
+
+      element.style.position = 'relative';
+      element.appendChild(ripple);
+
+      animate(ripple, {
+        width: size * 2,
+        height: size * 2,
+        opacity: [0.6, 0],
+        duration: 600,
+        easing: 'easeOutQuart',
+        complete: () => {
+          ripple.remove();
+        }
+      });
+    };
+
+    element.addEventListener('mouseenter', handleMouseEnter);
+    element.addEventListener('mouseleave', handleMouseLeave);
+    element.addEventListener('mousedown', handleMouseDown);
+
+    return () => {
+      element.removeEventListener('mouseenter', handleMouseEnter);
+      element.removeEventListener('mouseleave', handleMouseLeave);
+      element.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [prefersReducedMotion, disabled]);
   
   if (href) {
     return (
       <motion.a
+        ref={linkRef}
         href={href}
         className={`${classes} relative overflow-hidden`}
         variants={motionVariants.gentleLift}
@@ -70,6 +147,7 @@ export function Button({
   
   return (
     <MotionComponent
+      ref={buttonRef}
       className={`${classes} relative overflow-hidden`}
       onClick={onClick}
       disabled={disabled}
