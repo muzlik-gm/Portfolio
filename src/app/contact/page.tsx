@@ -156,7 +156,7 @@ export default function ContactPage() {
                 key={method.title}
                 variants={scrollReveal}
                 transition={{ delay: index * 0.1 }}
-                className="bg-background/50 backdrop-blur-sm rounded-2xl p-6 border border-accent/10 hover:border-accent/30 transition-all duration-300 group text-center"
+                className="bg-background/50 backdrop-blur-sm rounded-2xl p-6 border-[3px] border-[#8b635c]/50 hover:border-[#8b635c]/80 transition-all duration-300 group text-center"
               >
                 <div className="space-y-4">
                   <div className="w-16 h-16 mx-auto bg-accent/10 rounded-full flex items-center justify-center group-hover:bg-accent/20 transition-colors">
@@ -205,7 +205,7 @@ export default function ContactPage() {
               </Typography>
             </div>
             
-            <div className="bg-surface/30 backdrop-blur-sm rounded-2xl p-8 border border-accent/10">
+            <div className="bg-surface/30 backdrop-blur-sm rounded-2xl p-8 border-[3px] border-[#8b635c]/60">
               <ContactForm />
             </div>
           </motion.div>
@@ -236,7 +236,7 @@ export default function ContactPage() {
                   rel="noopener noreferrer"
                   variants={scrollReveal}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-surface/30 backdrop-blur-sm rounded-xl p-4 border border-accent/10 hover:border-accent/30 hover:bg-surface/50 transition-all duration-300 group block"
+                  className="bg-surface/30 backdrop-blur-sm rounded-xl p-4 border-[3px] border-[#8b635c]/50 hover:border-[#8b635c]/80 hover:bg-surface/50 transition-all duration-300 group block"
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -244,7 +244,7 @@ export default function ContactPage() {
                     <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${link.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                       {(() => {
                         const IconComponent = iconComponents[link.icon as keyof typeof iconComponents];
-                        return <IconComponent className="text-white" size={24} />;
+                        return <IconComponent className="text-black" size={24} />;
                       })()}
                     </div>
                     <div className="flex-1">
@@ -266,7 +266,7 @@ export default function ContactPage() {
             {/* Direct Contact */}
             <motion.div
               variants={scrollReveal}
-              className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl p-6 border border-accent/20 text-center"
+              className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl p-6 border-[3px] border-[#8b635c]/60 text-center"
             >
               <Typography variant="body" className="text-foreground/80 mb-4">
                 Prefer a direct approach?
@@ -324,12 +324,12 @@ export default function ContactPage() {
                 key={faq.question}
                 variants={scrollReveal}
                 transition={{ delay: index * 0.1 }}
-                className="bg-background/50 backdrop-blur-sm rounded-xl p-6 border border-accent/10"
+                className="bg-background/50 backdrop-blur-sm rounded-xl p-6 border-[3px] border-[#8b635c]/50"
               >
                 <Typography variant="body" className="font-semibold text-foreground mb-2">
                   {faq.question}
                 </Typography>
-                <Typography variant="body" className="text-foreground/70 text-sm leading-relaxed">
+                <Typography variant="body" className="text-foreground/80 text-sm leading-relaxed">
                   {faq.answer}
                 </Typography>
               </motion.div>

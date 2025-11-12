@@ -10,7 +10,7 @@ export function Footer() {
 
   return (
     <motion.footer
-      className="relative bg-surface/20 border-t border-accent/10 py-12"
+      className="relative bg-surface/20 border-t-2 border-accent/30 py-12"
       variants={scrollReveal}
       initial="hidden"
       whileInView="visible"
@@ -61,7 +61,7 @@ export function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-8 pt-8 border-t border-accent/10 text-center">
+        <div className="mt-8 pt-8 border-t-2 border-accent/30 text-center">
           <Typography variant="body" className="text-foreground/50 text-sm">
             Designed and developed with passion in Pakistan
           </Typography>

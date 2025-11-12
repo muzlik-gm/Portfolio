@@ -190,7 +190,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="min-w-[200px] px-8 py-4 text-lg rounded-2xl bg-gradient-to-r from-primary to-secondary text-background font-semibold hover:from-secondary hover:to-primary shadow-medium hover:shadow-strong border border-primary/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="min-w-[200px] px-8 py-4 text-lg rounded-2xl bg-[#8b635c] text-[#fafaf9] font-semibold hover:bg-[#8b635c]/80 shadow-medium hover:shadow-strong border-[3px] border-[#8b635c] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-describedby={errors.general ? "general-error" : undefined}
         >
           {isSubmitting ? (
@@ -278,7 +278,7 @@ function FormField({
   rows = 4,
   required = false
 }: FormFieldProps) {
-  const baseClasses = "w-full px-4 py-3 bg-surface/30 border border-accent/20 rounded-xl text-foreground placeholder-foreground/50 focus:outline-none focus:border-accent focus:bg-surface/50 transition-all duration-300";
+  const baseClasses = "w-full px-4 py-3 bg-surface/30 border-[3px] border-[#8b635c]/60 rounded-xl text-foreground placeholder-foreground/50 focus:outline-none focus:border-[#8b635c] focus:bg-surface/50 transition-all duration-300";
   const errorClasses = error ? "border-red-500/50 focus:border-red-500" : "";
   const inputId = `field-${label.toLowerCase().replace(/\s+/g, '-')}`;
 

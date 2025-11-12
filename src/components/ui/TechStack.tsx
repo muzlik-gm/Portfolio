@@ -63,7 +63,7 @@ export function TechStack({ technologies, className = "" }: TechStackProps) {
         return (
           <motion.div
             key={tech}
-            className="flex items-center gap-2 bg-surface/30 backdrop-blur-sm rounded-lg px-3 py-2 border border-accent/10 hover:border-accent/30 transition-colors group"
+            className="flex items-center gap-2 bg-surface/30 backdrop-blur-sm rounded-lg px-3 py-2 border-2 border-accent/40 hover:border-accent/60 transition-colors group"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ 

@@ -111,7 +111,7 @@ export function Navigation({ className = "" }: NavigationProps) {
         <motion.div
           className={`flex items-center justify-between py-4 transition-all duration-300 ${
             isScrolled 
-              ? "bg-background/80 backdrop-blur-md rounded-2xl mt-4 px-6 shadow-soft border border-accent/10" 
+              ? "bg-background/80 backdrop-blur-md rounded-2xl mt-4 px-6 shadow-soft border-2 border-accent/30" 
               : "bg-transparent"
           }`}
           layout
@@ -133,7 +133,7 @@ export function Navigation({ className = "" }: NavigationProps) {
                 onClick={() => handleNavClick(item)}
                 className={`relative px-4 py-2 text-sm font-medium transition-colors duration-300 ${
                   activeSection === item.id 
-                    ? "text-accent" 
+                    ? "text-[#8b635c]" 
                     : "text-foreground/70 hover:text-foreground"
                 }`}
                 whileHover={prefersReducedMotion ? {} : { y: -2 }}
@@ -145,7 +145,7 @@ export function Navigation({ className = "" }: NavigationProps) {
                 <AnimatePresence>
                   {activeSection === item.id && (
                     <motion.div
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#8b635c] rounded-full"
                       layoutId="activeIndicator"
                       initial={{ opacity: 0, scaleX: 0 }}
                       animate={{ opacity: 1, scaleX: 1 }}
@@ -181,7 +181,7 @@ function MobileNavigation({
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
     >
-      <div className="bg-background/90 backdrop-blur-md rounded-2xl border border-accent/10 shadow-medium">
+      <div className="bg-background/90 backdrop-blur-md rounded-2xl border-2 border-accent/40 shadow-medium">
         <div className="flex items-center justify-around py-3">
           {navigationItems.map((item) => (
             <motion.button
@@ -189,13 +189,13 @@ function MobileNavigation({
               onClick={() => onNavClick(item)}
               className={`relative flex flex-col items-center px-4 py-2 ${
                 activeSection === item.id 
-                  ? "text-accent" 
+                  ? "text-[#8b635c]" 
                   : "text-foreground/70"
               }`}
               whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
             >
               <div className={`w-2 h-2 rounded-full mb-1 transition-colors duration-300 ${
-                activeSection === item.id ? "bg-accent" : "bg-foreground/30"
+                activeSection === item.id ? "bg-[#8b635c]" : "bg-foreground/30"
               }`} />
               <span className="text-xs font-medium">{item.label}</span>
             </motion.button>

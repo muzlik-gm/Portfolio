@@ -165,7 +165,7 @@ export function AboutSection() {
             {/* Mission Statement */}
             <motion.div
               variants={scrollReveal}
-              className="bg-surface/30 backdrop-blur-sm rounded-2xl p-8 border border-accent/10"
+              className="bg-surface/30 backdrop-blur-sm rounded-2xl p-8 border border-accent/30"
             >
               <Typography variant="subheading" className="text-accent mb-4">
                 My Mission
@@ -186,7 +186,7 @@ export function AboutSection() {
                     key={value}
                     variants={scrollReveal}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-background/50 rounded-xl p-4 border border-accent/10 hover:border-accent/30 transition-colors"
+                    className="bg-background/50 rounded-xl p-4 border border-accent/30 hover:border-accent/50 transition-colors"
                   >
                     <Typography variant="body" className="text-sm font-medium text-foreground/90">
                       {value}
@@ -233,7 +233,7 @@ export function AboutSection() {
             
             <div className="relative">
               {/* Timeline Line - Hide on mobile, show on larger screens */}
-              <div className="hidden md:block absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-secondary" />
+              <div className="hidden md:block absolute left-6 top-0 bottom-0 w-1 bg-[#8b635c]" />
 
               {/* Timeline Items */}
               <div className="space-y-6 md:space-y-8">
@@ -245,20 +245,14 @@ export function AboutSection() {
                     className="relative flex flex-col md:flex-row items-start gap-4 md:gap-6"
                   >
                     {/* Timeline Dot - Adjust positioning for mobile */}
-                    <div className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${
-                      item.type === 'milestone'
-                        ? 'bg-primary border-primary/30'
-                        : item.type === 'project'
-                        ? 'bg-accent border-accent/30'
-                        : 'bg-secondary border-secondary/30'
-                    }`}>
-                      <span className="text-background font-bold text-sm">
+                    <div className="relative z-10 w-12 h-12 rounded-full flex items-center justify-center border-[3px] flex-shrink-0 bg-background border-[#8b635c]">
+                      <span className="text-foreground font-bold text-sm">
                         {item.year.slice(-2)}
                       </span>
                     </div>
 
                     {/* Timeline Content - Full width on mobile, flex-1 on larger screens */}
-                    <div className="w-full md:flex-1 bg-surface/20 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-accent/10 hover:border-accent/20 transition-colors">
+                    <div className="w-full md:flex-1 bg-surface/20 backdrop-blur-sm rounded-xl p-4 md:p-6 border-2 border-[#8b635c]/50 hover:border-[#8b635c]/80 transition-colors">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                         <Typography variant="body" className="font-semibold text-foreground">
                           {item.title}
@@ -303,7 +297,7 @@ export function AboutSection() {
                   transition={{ delay: categoryIndex * 0.1 }}
                   className="space-y-4"
                 >
-                  <div className={`bg-gradient-to-r ${category.color} p-4 rounded-xl text-center`}>
+                  <div className="bg-accent p-4 rounded-xl text-center border border-accent">
                     <Typography variant="body" className="font-semibold text-background">
                       {category.label}
                     </Typography>

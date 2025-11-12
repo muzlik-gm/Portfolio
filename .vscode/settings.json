@@ -4,5 +4,6 @@
         "gsap",
         "haikei",
         "NEXTAUTH"
-    ]
+    ],
+    "typescript.autoClosingTags": false
 }

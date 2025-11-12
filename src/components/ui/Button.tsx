@@ -33,9 +33,9 @@ export function Button({
   const baseClasses = "inline-flex items-center justify-center font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
   
   const variantClasses = {
-    primary: "bg-gradient-to-r from-primary to-secondary text-background font-semibold hover:from-secondary hover:to-primary shadow-medium hover:shadow-strong border border-primary/20",
-    secondary: "bg-background/80 backdrop-blur-sm text-foreground border-2 border-accent/40 hover:border-accent hover:bg-accent/10 font-medium shadow-soft hover:shadow-medium",
-    ghost: "text-foreground hover:text-accent hover:bg-surface/50 border border-transparent hover:border-accent/20"
+    primary: "bg-[#8b635c] text-[#fafaf9] font-semibold hover:bg-[#8b635c]/80 shadow-md hover:shadow-lg border-[3px] border-[#8b635c]",
+    secondary: "bg-background border-[3px] border-[#8b635c] text-foreground hover:bg-[#8b635c]/10 font-medium shadow-sm hover:shadow-md",
+    ghost: "text-foreground hover:text-[#8b635c] hover:bg-surface/50 border-2 border-[#8b635c]/40 hover:border-[#8b635c]/70"
   };
   
   const sizeClasses = {

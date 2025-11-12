@@ -271,13 +271,13 @@ export function ContactSection() {
               key={action.title}
               variants={scrollReveal}
               transition={{ delay: index * 0.1 }}
-              className="bg-background/50 backdrop-blur-sm rounded-2xl p-6 border border-accent/10 hover:border-accent/30 transition-all duration-300 group"
+              className="bg-background/50 backdrop-blur-sm rounded-2xl p-6 border-[3px] border-[#8b635c]/50 hover:border-[#8b635c]/80 transition-all duration-300 group"
             >
               <div className="space-y-4">
-                <Typography variant="subheading" className="text-foreground group-hover:text-accent transition-colors">
+                <Typography variant="subheading" className="text-foreground group-hover:text-[#8b635c] transition-colors">
                   {action.title}
                 </Typography>
-                <Typography variant="body" className="text-foreground/70 text-sm leading-relaxed">
+                <Typography variant="body" className="text-foreground/90 text-sm leading-relaxed">
                   {action.description}
                 </Typography>
                 <Button 
@@ -312,7 +312,7 @@ export function ContactSection() {
               </Typography>
             </div>
             
-            <div className="bg-background/30 backdrop-blur-sm rounded-2xl p-8 border border-accent/10">
+            <div className="bg-background/30 backdrop-blur-sm rounded-2xl p-8 border-[3px] border-[#8b635c]/60">
               <ContactForm />
             </div>
           </motion.div>
@@ -387,17 +387,17 @@ export function ContactSection() {
                       rel="noopener noreferrer"
                       variants={scrollReveal}
                       transition={{ delay: index * 0.1 }}
-                      className="bg-surface/30 backdrop-blur-sm rounded-xl p-4 border border-accent/10 hover:border-accent/30 hover:bg-surface/50 transition-all duration-300 group block"
+                      className="bg-surface/30 backdrop-blur-sm rounded-xl p-4 border-[3px] border-[#8b635c]/50 hover:border-[#8b635c]/80 hover:bg-surface/50 transition-all duration-300 group block"
                       whileHover={{ y: -2 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <div className="flex items-center gap-3">
-                        <IconComponent className="text-accent group-hover:scale-110 transition-transform" size={20} />
+                        <IconComponent className="text-[#8b635c] group-hover:scale-110 transition-transform" size={20} />
                         <div>
-                          <div className="font-medium text-foreground group-hover:text-accent transition-colors">
+                          <div className="font-medium text-foreground group-hover:text-[#8b635c] transition-colors">
                             {link.name}
                           </div>
-                          <div className="text-sm text-foreground/60">
+                          <div className="text-sm text-foreground/80">
                             {link.description}
                           </div>
                         </div>
@@ -411,7 +411,7 @@ export function ContactSection() {
             {/* Call to Action */}
             <motion.div
               variants={scrollReveal}
-              className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl p-6 border border-accent/20 text-center"
+              className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl p-6 border-[3px] border-[#8b635c]/60 text-center"
             >
               <Typography variant="body" className="text-foreground/80 mb-4">
                 Prefer a direct approach?
@@ -433,7 +433,7 @@ export function ContactSection() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          className="text-center pt-8 border-t border-accent/10"
+          className="text-center pt-8 border-t-[3px] border-[#8b635c]/50"
         >
           <div className="flex items-center justify-center gap-2">
             <Typography variant="body" className="text-foreground/60 text-sm">

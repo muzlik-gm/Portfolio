@@ -17,7 +17,7 @@ interface CardProps {
 export function Card({ children, className = "", hover = true, glow = false }: CardProps) {
   const prefersReducedMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
-  const baseClasses = "bg-surface/50 backdrop-blur-sm border border-accent/10 rounded-2xl overflow-hidden";
+  const baseClasses = "bg-surface/50 backdrop-blur-sm border-2 border-accent/30 rounded-2xl overflow-hidden";
   const glowClasses = glow ? "shadow-medium hover:shadow-strong" : "shadow-soft";
   const classes = `${baseClasses} ${glowClasses} ${className}`;
 

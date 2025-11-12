@@ -88,7 +88,7 @@ export function ProjectsSection() {
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
         >
-          <div className="flex bg-surface/50 backdrop-blur-sm rounded-2xl p-2 border border-accent/10">
+          <div className="flex bg-surface/50 backdrop-blur-sm rounded-2xl p-2 border border-accent/30">
             {categories.map((category) => (
               <button
                 key={category.id}
@@ -168,7 +168,7 @@ function ProjectCard({
         ease: [0.25, 0.46, 0.45, 0.94] as any
       }}
     >
-      <Card className="h-full overflow-hidden bg-background/50 border-accent/20 hover:border-accent/40 hover:shadow-medium">
+      <Card className="h-full overflow-hidden bg-background/50 border-accent/40 hover:border-accent/60 hover:shadow-medium">
         {/* Project Visual */}
         <div className="relative h-48 overflow-hidden">
           <ProjectImage 
@@ -306,7 +306,7 @@ function ProjectModal({
 
       {/* Modal Content */}
       <motion.div
-        className="relative bg-background border border-accent/20 rounded-3xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-strong focus:outline-none"
+        className="relative bg-background border-2 border-accent rounded-3xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-strong focus:outline-none"
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
